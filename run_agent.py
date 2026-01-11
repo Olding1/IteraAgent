@@ -50,18 +50,52 @@ def main():
     # Check if .env exists
     env_file = selected_agent / ".env"
     env_template = selected_agent / ".env.template"
+    main_env = Path(".env")
     
-    if not env_file.exists() and env_template.exists():
-        print(f"\n⚠️  No .env file found for {selected_agent.name}")
-        print("   Creating .env from template...")
-        shutil.copy(env_template, env_file)
-        print(f"   ✓ Created {env_file}")
-        print("\n   ⚠️  IMPORTANT: Please edit .env and add your API keys before running!")
-        print(f"   Location: {env_file.absolute()}")
-        
-        response = input("\n   Continue anyway? (y/n): ")
-        if response.lower() != 'y':
-            return
+    if not env_file.exists():
+        # Try to copy from main project .env first
+        if main_env.exists():
+            print(f"\n📋 Copying .env configuration from main project...")
+            try:
+                # Read main .env and extract Runtime API settings
+                with open(main_env, 'r', encoding='utf-8') as f:
+                    main_content = f.read()
+                
+                # Create agent .env with Runtime API settings
+                agent_env_content = f"""# Agent Runtime Configuration
+# Auto-copied from main project
+
+# Runtime API Configuration
+"""
+                # Extract Runtime API lines from main .env
+                for line in main_content.split('\n'):
+                    if line.strip().startswith('RUNTIME_'):
+                        agent_env_content += line + '\n'
+                
+                # Write to agent .env
+                with open(env_file, 'w', encoding='utf-8') as f:
+                    f.write(agent_env_content)
+                
+                print(f"   ✓ Created {env_file}")
+                print(f"   ✓ Copied Runtime API configuration")
+                
+            except Exception as e:
+                print(f"   ⚠️  Failed to copy .env: {e}")
+                print(f"   Creating from template instead...")
+                if env_template.exists():
+                    shutil.copy(env_template, env_file)
+                    print(f"   ✓ Created {env_file} from template")
+        elif env_template.exists():
+            print(f"\n⚠️  No .env file found for {selected_agent.name}")
+            print("   Creating .env from template...")
+            shutil.copy(env_template, env_file)
+            print(f"   ✓ Created {env_file}")
+            print("\n   ⚠️  IMPORTANT: Please edit .env and add your API keys before running!")
+            print(f"   Location: {env_file.absolute()}")
+            
+            response = input("\n   Continue anyway? (y/n): ")
+            if response.lower() != 'y':
+                return
     
     # Check for Python executable in venv
     if sys.platform == "win32":
@@ -90,8 +124,8 @@ def main():
     # Run the agent
     try:
         subprocess.run(
-            [str(python_exe), str(agent_script)],
-            cwd=selected_agent,
+            [str(python_exe.absolute()), "agent.py"],
+            cwd=str(selected_agent.absolute()),
             check=True,
         )
     except subprocess.CalledProcessError as e:

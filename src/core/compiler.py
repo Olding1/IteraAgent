@@ -155,7 +155,7 @@ class Compiler:
         requirements = [
             "# Core dependencies",
             "langchain>=0.2.0",
-            "langgraph>=0.2.0",
+            "langgraph>=0.2.28",  # Includes checkpoint.sqlite
             "langchain-openai>=0.1.0",
             "python-dotenv>=1.0.0",
             "pyyaml>=6.0.1",
