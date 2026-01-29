@@ -90,45 +90,45 @@ Your Idea → AI Design → Auto-Generate → Test & Optimize → Deploy to Dify
 
 ### Installation
 
-**方式 1: 一键安装（推荐）**
+**Option 1: One-Click Installation (Recommended)**
 
 ```bash
 # Clone the repository
 git clone https://github.com/Olding1/Agent_Zero.git
 cd Agent_Zero
 
-# Windows 用户
+# Windows users
 setup.bat
 
-# Linux/Mac 用户
+# Linux/Mac users
 chmod +x setup.sh
 ./setup.sh
 
-# 或直接运行 Python 脚本
+# Or run Python script directly
 python setup.py
 ```
 
-一键安装脚本会自动完成：
-- ✅ 检查 Python 版本
-- ✅ 升级 pip 到最新版本
-- ✅ 安装所有依赖（requirements.txt）
-- ✅ 可选安装开发依赖（requirements-dev.txt）
-- ✅ 创建并配置 .env 文件（交互式配置 API 密钥）
-- ✅ 创建必要的项目目录
-- ✅ 验证安装是否成功
+The one-click installation script will automatically:
+- ✅ Check Python version
+- ✅ Upgrade pip to the latest version
+- ✅ Install all dependencies (requirements.txt)
+- ✅ Optionally install development dependencies (requirements-dev.txt)
+- ✅ Create and configure .env file (interactive API key setup)
+- ✅ Create necessary project directories
+- ✅ Verify installation success
 
-**方式 2: 手动安装**
+**Option 2: Manual Installation**
 
 ```bash
-# 安装核心依赖
+# Install core dependencies
 pip install -r requirements.txt
 
-# (可选) 安装开发依赖（用于测试、类型检查、文档生成）
+# (Optional) Install development dependencies (for testing, type checking, documentation)
 pip install -r requirements-dev.txt
 
-# 配置环境
+# Configure environment
 cp .env.template .env
-# 编辑 .env 文件，填入你的 API 密钥
+# Edit .env file and add your API keys
 ```
 
 ### Create Your First Agent
