@@ -10,7 +10,7 @@
 
 *An intelligent platform for building, testing, optimizing, and deploying production-ready AI agents*
 
-[Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Examples](#-examples)
+[Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Examples](#-examples) • [中文文档](README_CN.md)
 
 </div>
 
@@ -94,7 +94,7 @@ Your Idea → AI Design → Auto-Generate → Test & Optimize → Deploy to Dify
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/Agent_Zero.git
+git clone https://github.com/Olding1/Agent_Zero.git
 cd Agent_Zero
 
 # Windows 用户
