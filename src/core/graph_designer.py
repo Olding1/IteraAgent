@@ -277,12 +277,28 @@ class GraphDesigner:
                 nodes, tools_config, pattern
             )
             nodes.extend(tool_nodes)
+            edges.extend(tool_edges)
             
             # Update conditional edges for tools
             if pattern.pattern_type == PatternType.SUPERVISOR:
                 conditional_edges = self._update_supervisor_edges(
                     conditional_edges, tools_config
                 )
+            # 🔗 Fix Sequential Pattern Routing
+            elif pattern.pattern_type == PatternType.SEQUENTIAL:
+                 conditional_edges = self._resolve_tools_placeholder(
+                    conditional_edges, tools_config
+                 )
+            
+            # 🔗 Fix Plan-Execute Pattern Routing (Executor -> Tools)
+            # We need to ADD a conditional edge from executor -> tools if it doesn't exist?
+            # Or assume Executor has it?
+            # Plan-Execute template usually doesn't have default cond edge for tools.
+            # We must injecting it dynamically here.
+            elif pattern.pattern_type == PatternType.PLAN_EXECUTE:
+                 conditional_edges = self._inject_executor_tool_routing(
+                    conditional_edges, tools_config
+                 )
         
         # 🆕 v7.2: 如果有 RAG,Entry Point 应该是 intent_router
         entry_point = template.get("entry_point", nodes[0].id if nodes else "agent")
@@ -300,6 +316,8 @@ class GraphDesigner:
             entry_point=entry_point
         )
     
+        return nodes
+    
     def _create_nodes_from_template(
         self,
         template: Dict[str, Any],
@@ -308,6 +326,26 @@ class GraphDesigner:
         """Create nodes from pattern template."""
         nodes = []
         default_nodes = template.get("default_nodes", [])
+        print(f"🔍 [GraphDesigner] Template nodes for {pattern.pattern_type}: {default_nodes}")
+        
+        # 🔗 Fallback for Sequential Pattern (if template empty)
+        if not default_nodes and pattern.pattern_type == PatternType.SEQUENTIAL:
+            print("🔧 [GraphDesigner] Using hardcoded fallback for Sequential Nodes")
+            default_nodes = [{
+                "id": "agent",
+                "type": "llm",
+                "role_description": "Primary Agent",
+                "config": {}
+            }]
+            
+        # 🔗 Fallback for Plan-Execute Pattern
+        elif not default_nodes and pattern.pattern_type == PatternType.PLAN_EXECUTE:
+            print("🔧 [GraphDesigner] Using hardcoded fallback for Plan-Execute Nodes")
+            default_nodes = [
+                {"id": "planner", "type": "llm", "role_description": "Planner"},
+                {"id": "executor", "type": "llm", "role_description": "Executor"},
+                {"id": "replanner", "type": "llm", "role_description": "Replanner"}
+            ]
         
         for node_def in default_nodes:
             nodes.append(NodeDef(
@@ -332,6 +370,8 @@ class GraphDesigner:
         
         return edges
     
+        return conditional_edges
+
     def _create_conditional_edges_from_template(
         self,
         template: Dict[str, Any],
@@ -341,6 +381,35 @@ class GraphDesigner:
         conditional_edges = []
         default_cond_edges = template.get("default_conditional_edges", [])
         
+        # 🔗 Fallback for Sequential Pattern
+        if not default_cond_edges and pattern.pattern_type == PatternType.SEQUENTIAL:
+            print("🔧 [GraphDesigner] Using hardcoded fallback for Sequential Conditional Edges")
+            default_cond_edges = [{
+                "source": "agent",
+                "condition": "should_continue",
+                # ✅ Fixed: Correct logic to check tool_calls and return tool name
+                "condition_logic": """
+last_msg = state.get("messages", [])[-1] if state.get("messages") else None
+if last_msg and hasattr(last_msg, "tool_calls") and last_msg.tool_calls:
+    return last_msg.tool_calls[0]["name"]
+return "end"
+""",
+                "branches": {
+                    "continue": "tools", # Placeholder, replaced by _resolve_tools_placeholder
+                    "end": "END"
+                }
+            }]
+
+        # 🔗 Fallback for Plan-Execute Pattern
+        elif not default_cond_edges and pattern.pattern_type == PatternType.PLAN_EXECUTE:
+             print("🔧 [GraphDesigner] Using hardcoded fallback for Plan-Execute Conditional Edges")
+             default_cond_edges = [{
+                 "source": "replanner",
+                 "condition": "should_end_or_replan",
+                 "condition_logic": "return 'end' if state.get('is_finished') else 'continue'",
+                 "branches": {"end": "END", "continue": "executor"}
+             }]
+
         for edge_def in default_cond_edges:
             conditional_edges.append(ConditionalEdgeDef(
                 source=edge_def["source"],
@@ -475,16 +544,28 @@ else:
             )
             tool_nodes.append(tool_node)
             
-            # For non-supervisor patterns, add return edges
-            if pattern.pattern_type != PatternType.SUPERVISOR:
-                # Find main agent node
+            # Logic for Return Edges
+            
+            # 1. Sequential: Tool -> Agent
+            if pattern.pattern_type == PatternType.SEQUENTIAL:
                 agent_nodes = [n for n in existing_nodes if n.type == "llm"]
                 if agent_nodes:
                     tool_edges.append(EdgeDef(
                         source=f"tool_{tool_name}",
                         target=agent_nodes[0].id
                     ))
-        
+            
+            # 2. Plan-Execute: Tool -> Executor
+            elif pattern.pattern_type == PatternType.PLAN_EXECUTE:
+                # Tools used by executor should return execution result to executor
+                tool_edges.append(EdgeDef(
+                    source=f"tool_{tool_name}",
+                    target="executor"
+                ))
+            
+            # 3. Supervisor: Tool output handled by graph state or specific worker logic
+            # (Usually Supervisor pattern uses workers that call tools)
+                
         return tool_nodes, tool_edges
     
     def _update_supervisor_edges(
@@ -501,7 +582,93 @@ else:
                     edge.branches[tool_name] = f"tool_{tool_name}"
         
         return conditional_edges
-    
+
+    def _resolve_tools_placeholder(
+        self,
+        conditional_edges: List[ConditionalEdgeDef],
+        tools_config: ToolsConfig
+    ) -> List[ConditionalEdgeDef]:
+        """Resolve 'tools' placeholder in conditional edges for Sequential pattern.
+        
+        Replaces:
+            branches={"continue": "tools"}
+        With:
+            branches={
+                "tool_a": "tool_tool_a",
+                "tool_b": "tool_tool_b"
+            }
+        
+        And updates condition logic to return tool name.
+        """
+        for edge in conditional_edges:
+            # Check for 'tools' placeholder
+            placeholder_key = None
+            for key, target in edge.branches.items():
+                if target == "tools":
+                    placeholder_key = key
+                    break
+            
+            if placeholder_key:
+                # Remove placeholder
+                del edge.branches[placeholder_key]
+                
+                # Add actual tool nodes
+                for tool_name in tools_config.enabled_tools:
+                    # branch key = tool_name (what logic returns)
+                    # branch target = node_id (where to go)
+                    edge.branches[tool_name] = f"tool_{tool_name}"
+                
+                # Update condition logic description to reflect this
+                # (Actual logic generation happens in Compiler, this is for graph structure validity)
+                if not edge.condition_logic or "tools" in edge.condition_logic:
+                    # Generic logic description
+                     edge.condition_logic = f"""
+# Tool Routing Logic
+# Returns the name of the tool to call
+
+last_msg = state["messages"][-1]
+if hasattr(last_msg, "tool_calls") and last_msg.tool_calls:
+    return last_msg.tool_calls[0]["name"]
+return "end"
+"""
+        return conditional_edges
+
+    def _inject_executor_tool_routing(
+        self, 
+        conditional_edges: List[ConditionalEdgeDef],
+        tools_config: ToolsConfig
+    ) -> List[ConditionalEdgeDef]:
+        """Inject conditional edge from Executor to Tools for Plan-Execute."""
+        
+        # Check if we already have an edge from executor
+        has_exec_edge = any(e.source == "executor" for e in conditional_edges)
+        
+        if not has_exec_edge:
+             branches = {}
+             # Add all tools
+             for tool_name in tools_config.enabled_tools:
+                 branches[tool_name] = f"tool_{tool_name}"
+             
+             # Add fallback to evaluator (if no tool needed)
+             branches["evaluator"] = "evaluator"
+             
+             new_edge = ConditionalEdgeDef(
+                 source="executor",
+                 condition="execute_step",
+                 condition_logic="""
+# Executor Routing
+last_msg = state["messages"][-1]
+if hasattr(last_msg, "tool_calls") and last_msg.tool_calls:
+    return last_msg.tool_calls[0]["name"]
+return "evaluator"
+""",
+                 branches=branches
+             )
+             conditional_edges.append(new_edge)
+             print(f"🔧 [GraphDesigner] Injected Executor -> Tools routing edge")
+             
+        return conditional_edges
+
     # ==================== Main Entry Point ====================
     
     async def design_graph(
@@ -533,7 +700,92 @@ else:
             project_meta, pattern, state_schema, tools_config, rag_config
         )
         
+        # 🆕 v8.0: Interface Guard - 验证工具参数
+        if tools_config and tools_config.enabled_tools:
+            await self._validate_tool_parameters(tools_config)
+        
         return graph
+    
+    async def _validate_tool_parameters(self, tools_config: ToolsConfig) -> None:
+        """验证工具参数 Schema (v8.0 Interface Guard)
+        
+        Args:
+            tools_config: 工具配置
+        """
+        from .interface_guard import InterfaceGuard
+        from ..tools import get_global_registry
+        
+        print("🛡️ [Interface Guard] 开始验证工具参数...")
+        
+        guard = InterfaceGuard(self.builder, max_retries=3)
+        registry = get_global_registry()
+        
+        for tool_name in tools_config.enabled_tools:
+            metadata = registry.get_metadata(tool_name)
+            
+            if not metadata:
+                print(f"⚠️ [Interface Guard] 工具 {tool_name} 未在注册表中找到")
+                continue
+            
+            if not metadata.openapi_schema:
+                print(f"⚠️ [Interface Guard] 工具 {tool_name} 缺少 openapi_schema")
+                continue
+            
+            # 生成示例参数进行验证
+            sample_args = self._generate_sample_args(tool_name, metadata)
+            
+            # 同步验证 (不进行自动修复)
+            is_valid, errors = guard.validate_sync(
+                tool_name, sample_args, metadata.openapi_schema
+            )
+            
+            if is_valid:
+                print(f"✅ [Interface Guard] 工具 {tool_name} 参数验证通过")
+            else:
+                print(f"⚠️ [Interface Guard] 工具 {tool_name} 参数验证失败:")
+                for error in errors:
+                    print(f"   - {error.error_message}")
+    
+    def _generate_sample_args(self, tool_name: str, metadata) -> Dict[str, Any]:
+        """生成工具的示例参数用于验证
+        
+        Args:
+            tool_name: 工具名称
+            metadata: 工具元数据
+            
+        Returns:
+            示例参数字典
+        """
+        # 如果有示例,使用第一个示例
+        if metadata.examples and len(metadata.examples) > 0:
+            return metadata.examples[0]
+        
+        # 否则根据 Schema 生成默认参数
+        schema = metadata.openapi_schema
+        sample_args = {}
+        
+        properties = schema.get("properties", {})
+        required = schema.get("required", [])
+        
+        for field_name, field_schema in properties.items():
+            field_type = field_schema.get("type", "string")
+            
+            # 只为必填字段生成默认值
+            if field_name in required:
+                if field_type == "string":
+                    sample_args[field_name] = f"sample_{field_name}"
+                elif field_type == "integer":
+                    sample_args[field_name] = 1
+                elif field_type == "number":
+                    sample_args[field_name] = 1.0
+                elif field_type == "boolean":
+                    sample_args[field_name] = True
+                elif field_type == "array":
+                    sample_args[field_name] = []
+                elif field_type == "object":
+                    sample_args[field_name] = {}
+        
+        return sample_args
     
     # ==================== Utility Methods ====================
     

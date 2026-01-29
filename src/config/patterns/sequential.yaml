@@ -1,0 +1,36 @@
+# Sequential Pattern Template
+# Default pattern for simple agent tasks
+
+description: "Single Agent loop with tool access. Suitable for simple tasks."
+
+# Default nodes to create
+default_nodes:
+  - id: "agent"
+    type: "llm"
+    role_description: "Primary agent responsible for reasoning and tool usage."
+    config:
+      system_message: "You are a helpful AI assistant."
+
+# Default conditional edges (Agent decides what to do next)
+default_conditional_edges:
+  - source: "agent"
+    condition: "should_continue"
+    condition_logic: |
+      # Check if we should call tools or end
+      # This logic is usually handled by the LLM response (tool_calls)
+      
+      last_message = state["messages"][-1]
+      
+      # If tool calls present, go to tools
+      if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+          return "continue"
+          
+      # Otherwise end
+      return "end"
+      
+    branches:
+      continue: "tools"  # Will be mapped to tool_node in code
+      end: "END"
+
+# Default normal edges
+default_edges: []

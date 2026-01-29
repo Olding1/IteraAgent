@@ -16,12 +16,19 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 from langgraph.graph.message import add_messages
 {% if has_tools %}
-from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.tools import Tool
 {% endif %}
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 import yaml
+
+{# 🆕 方案 A+: 工具导入 (置于顶部,符合 PEP 8) #}
+{% if tool_imports %}
+# Tool Imports
+{% for import_stmt in tool_imports %}
+{{ import_stmt }}
+{% endfor %}
+{% endif %}
 
 # Load environment variables
 load_dotenv()
@@ -29,6 +36,39 @@ load_dotenv()
 # Load prompts from YAML
 with open("prompts.yaml", "r", encoding="utf-8") as f:
     PROMPTS = yaml.safe_load(f)
+
+# 🆕 Helper: Check and prompt for API Keys
+def check_api_key(tool_name: str, env_var: str):
+    """Check if API Key exists, if not prompt user and save to .env"""
+    if not os.getenv(env_var):
+        print(f"\n⚠️  工具 {tool_name} 需要 API Key ({env_var})")
+        print(f"   请参考文档获取 Key。")
+        try:
+            key = input(f"🔑 请输入 {env_var}: ").strip()
+            if key:
+                # Update current env
+                os.environ[env_var] = key
+                
+                # Update .env file
+                env_path = Path(".env")
+                if env_path.exists():
+                    try:
+                        # Try to use dotenv.set_key if available
+                        from dotenv import set_key
+                        set_key(env_path, env_var, key)
+                    except ImportError:
+                         # Fallback to appending
+                        with open(env_path, "a", encoding="utf-8") as f:
+                            f.write(f"\n{env_var}={key}\n")
+                else:
+                    with open(env_path, "w", encoding="utf-8") as f:
+                        f.write(f"{env_var}={key}\n")
+                        
+                print(f"✅ 已保存 {env_var} 到 .env")
+            else:
+                print(f"⚠️  未提供 Key, 工具 {tool_name} 可能无法正常工作")
+        except Exception as e:
+            print(f"⚠️  无法保存 Key: {e}")
 
 # ==================== 核心：动态配置加载器 (v7.0 Dynamic Core) ====================
 class ConfigLoader:
@@ -220,11 +260,26 @@ llm = ChatOpenAI(
 {% if has_tools %}
 # ==================== Tools Initialization ====================
 tools = []
-{% for tool in enabled_tools %}
-# Tool: {{ tool }}
-# TODO: Implement tool initialization
+
+{% for tool in tool_inits %}
+# Init: {{ tool.name }}
+try:
+    {% if tool.env_var %}
+    if not os.getenv("{{ tool.env_var }}"):
+        print(f"⚠️  Warning: {{ tool.env_var }} not found. {{ tool.name }} may fail.")
+    {% endif %}
+    
+    tool_instance = {{ tool.class_name }}({{ tool.params }})
+    tools.append(tool_instance)
+    print(f"✅ Loaded Tool: {{ tool.name }}")
+except Exception as e:
+    print(f"❌ Failed to load {{ tool.name }}: {e}")
+    # 继续运行,不阻塞其他工具
+
 {% endfor %}
+print(f"📦 Total tools loaded: {len(tools)}/{{ tool_inits|length }}")
 {% endif %}
+
 
 
 # ==================== Node Functions ====================
@@ -284,10 +339,19 @@ def {{ node.id }}_node(state: AgentState) -> Dict[str, Any]:
     system_prompt = PROMPTS.get("system_prompt", "You are a helpful AI assistant.")
     {% endif %}
     
+    {% if has_tools %}
+    # 绑定工具 (使 LLM 能够生成 tool_calls)
+    llm_with_tools = llm.bind_tools(tools)
+    response = llm_with_tools.invoke([
+        {"role": "system", "content": system_prompt},
+        *messages
+    ])
+    {% else %}
     response = llm.invoke([
         {"role": "system", "content": system_prompt},
         *messages
     ])
+    {% endif %}
     
     # 🆕 记录 LLM 调用 (只存长度和预览,不存完整内容)
     trace_entry.update({
@@ -359,11 +423,26 @@ def {{ node.id }}_node(state: AgentState) -> Dict[str, Any]:
     
     {% elif node.type == "tool" %}
     # Tool execution logic
+    # Tool execution logic
     tool_name = "{{ node.config.tool_name if node.config and node.config.tool_name else node.id }}"
     tool_input = state["messages"][-1].content
     
-    # TODO: Implement tool execution
-    tool_output = f"Tool {tool_name} executed"
+    # helper to find tool
+    selected_tool = next((t for t in tools if t.name == tool_name), None)
+    
+    try:
+        if selected_tool:
+            # Execute tool
+            print(f"🔧 [Tool] Calling {tool_name} with input: {tool_input[:50]}...")
+            tool_output = str(selected_tool.invoke(tool_input))
+            print(f"   ✅ Output len: {len(tool_output)}")
+        else:
+             # Fallback/Mock behavior if tool not found (shouldn't happen if config is correct)
+            print(f"⚠️ [Tool] {tool_name} not found in initialized tools.")
+            tool_output = f"Tool {tool_name} not found. Input was: {tool_input}"
+    except Exception as e:
+        tool_output = f"Tool execution failed: {e}"
+        print(f"❌ [Tool] Error: {e}")
     
     # 🆕 记录工具调用 (截断长输出)
     trace_entry.update({
@@ -374,8 +453,20 @@ def {{ node.id }}_node(state: AgentState) -> Dict[str, Any]:
     })
     _trace_manager.add_entry(trace_entry)
     
+    # 获取 tool_call_id (从上一条消息的 tool_calls 中)
+    messages = state.get("messages", [])
+    tool_call_id = None
+    if messages and hasattr(messages[-1], "tool_calls") and messages[-1].tool_calls:
+        # 找到匹配的 tool_call
+        for tc in messages[-1].tool_calls:
+            if tc.get("name") == tool_name or tc["name"] == tool_name:
+                tool_call_id = tc.get("id") or tc["id"]
+                break
+    
+    # 返回 ToolMessage (OpenAI 要求)
+    from langchain_core.messages import ToolMessage
     return {
-        "messages": [AIMessage(content=tool_output)],
+        "messages": [ToolMessage(content=tool_output, tool_call_id=tool_call_id or "unknown")],
         "trace_file": state.get("trace_file")
     }
     

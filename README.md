@@ -1,4 +1,4 @@
-# Agent Zero v6.0
+# Agent Zero v8.0
 
 **Slogan:** Define logic, generate graph, auto-deploy.
 
@@ -12,6 +12,8 @@ Agent Zero 是一款桌面端、本地化、全自动的智能体构建工厂。
 - **无 Docker 化**: 使用 Python venv 实现轻量级环境隔离
 - **API 双轨制**: 区分构建用模型和运行用模型
 - **主动进化**: 利用 LangChain MCP 协议实现依赖库主动重构
+- **🆕 Interface Guard**: 基于 Pydantic 的参数验证和 LLM 自动修复 (v8.0)
+- **🆕 工具发现引擎**: 16+ 精选工具的本地索引和智能搜索 (v8.0)
 
 ## 🚀 快速开始
 

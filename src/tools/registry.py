@@ -13,6 +13,14 @@ class ToolMetadata(BaseModel):
     category: str = Field(default="general", description="Tool category")
     tags: List[str] = Field(default_factory=list, description="Tool tags for search")
     requires_api_key: bool = Field(default=False, description="Whether tool requires API key")
+    
+    # 🆕 v7.5: Schema support
+    openapi_schema: Optional[Dict[str, Any]] = Field(
+        default=None, description="OpenAPI 3.0 Schema for tool parameters"
+    )
+    examples: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Usage examples"
+    )
 
 
 class ToolRegistry:
@@ -54,6 +62,31 @@ class ToolRegistry:
         
         self._tools[tool.name] = tool
         self._metadata[tool.name] = metadata
+    
+    def register_definition(self, tool_def: Dict[str, Any]) -> None:
+        """Register a tool directly from its definition dictionary.
+        
+        This allows registering tool metadata without instantiating the tool class.
+        Useful for Interface Guard validation using static definitions.
+        
+        Args:
+            tool_def: Tool definition dictionary (from CURATED_TOOLS)
+        """
+        # Create metadata from definition
+        metadata = ToolMetadata(
+            name=tool_def["id"],  # Use ID as name for consistency
+            description=tool_def["description"],
+            category=tool_def["category"],
+            tags=tool_def.get("tags", []),
+            requires_api_key=tool_def.get("requires_api_key", False),
+            openapi_schema=tool_def.get("args_schema"), # JSON Schema style
+            examples=tool_def.get("examples", [])
+        )
+        
+        # Store metadata
+        # Note: We don't have the BaseTool instance yet, self._tools will be empty for this key
+        # This is fine for GraphDesigner validation which only checks metadata
+        self._metadata[tool_def["id"]] = metadata
     
     def get_tool(self, name: str) -> Optional[BaseTool]:
         """Get a tool by name.

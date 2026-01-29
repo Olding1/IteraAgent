@@ -11,6 +11,7 @@ from .simulator import Simulator
 from .test_generator import TestGenerator, DeepEvalTestConfig
 from .runner import Runner, DeepEvalTestResult
 from .judge import Judge, JudgeResult, ErrorType, FixTarget
+from .interface_guard import InterfaceGuard
 
 __all__ = [
     "Compiler",
@@ -29,4 +30,5 @@ __all__ = [
     "JudgeResult",
     "ErrorType",
     "FixTarget",
+    "InterfaceGuard",
 ]

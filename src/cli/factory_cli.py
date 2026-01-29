@@ -89,6 +89,15 @@ class CLIProgressCallback(ProgressCallback):
     def on_log(self, message: str):
         print(f"   ℹ️  {message}")
 
+    def on_api_key_missing(self, tool_name: str, env_var: str, help_text: str = "") -> str:
+        print(f"\n⚠️  工具 '{tool_name}' 需要配置 API Key")
+        if help_text:
+             # 多行打印帮助信息，或者作为 prompt 的一部分
+             print(f"   ℹ️  提示: {help_text}")
+        
+        prompt = f"🔑 请输入 {env_var}: "
+        return input(prompt).strip()
+
 
 async def run_interactive_factory():
     """Run the Agent Factory in interactive mode."""
@@ -127,8 +136,23 @@ async def run_interactive_factory():
                   raw_paths = files_input.split()
 
         # Clean up quotes and empty strings
-        raw_paths = [p.strip().strip('"').strip("'") for p in raw_paths if p.strip()]
-        file_paths = [str(Path(p).absolute()) for p in raw_paths]
+        valid_paths = []
+        for p in raw_paths:
+            cleaned_p = p.strip().strip('"').strip("'")
+            if not cleaned_p:
+                continue
+                
+            # Check for "None" / "No" / "无"
+            if cleaned_p.lower() in ["无", "no", "none", "false", "n", "null"]:
+                continue
+                
+            path_obj = Path(cleaned_p)
+            if path_obj.exists():
+                valid_paths.append(str(path_obj.absolute()))
+            else:
+                print(f"⚠️  警告: 文件不存在，已忽略: {cleaned_p}")
+        
+        file_paths = valid_paths
     
     print("\n开始构建... (这可能需要几分钟)")
     

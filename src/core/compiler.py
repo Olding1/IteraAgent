@@ -8,6 +8,7 @@ from jinja2 import Environment, FileSystemLoader, Template
 from pydantic import BaseModel, Field
 
 from ..schemas import GraphStructure, RAGConfig, ToolsConfig, ProjectMeta
+from ..tools.definitions import CURATED_TOOLS
 from ..utils.config_utils import atomic_write_json
 
 
@@ -49,9 +50,106 @@ class Compiler:
         def sanitize_collection_name(name: str) -> str:
             """Replace non-ASCII and special characters with underscores"""
             import re
-            return re.sub(r'[^a-zA-Z0-9._-]', '_', name)
+            # 1. Replace invalid chars with underscores
+            clean = re.sub(r'[^a-zA-Z0-9._-]', '_', name)
+            
+            # 2. Ensure start/end with alphanumeric
+            if not clean or not clean[0].isalnum():
+                clean = "agent" + clean
+            if not clean[-1].isalnum():
+                clean = clean + "docs"
+                
+            # 3. Ensure length (3-63) - Chroma allows 512 but safe limit is better
+            if len(clean) < 3:
+                clean = clean + "_data"
+            
+            # 4. Collapse multiple underscores
+            clean = re.sub(r'_{2,}', '_', clean)
+            
+            return clean
         
         self.env.filters['sanitize_collection_name'] = sanitize_collection_name
+
+    def _prepare_tool_context(
+        self, 
+        enabled_tools: list[str]
+    ) -> dict:
+        """预处理工具元数据,生成模板所需的清洗数据 (方案 A+)
+        
+        Args:
+            enabled_tools: 启用的工具 ID 列表
+        
+        Returns:
+            {
+                "tool_imports": ["from langchain_community.tools import TavilySearchResults"],
+                "tool_inits": [
+                    {
+                        "name": "Tavily Search",
+                        "id": "tavily_search",
+                        "class_name": "TavilySearchResults",
+                        "params": 'api_key=os.getenv("TAVILY_API_KEY"), max_results=5',
+                        "env_var": "TAVILY_API_KEY"
+                    }
+                ]
+            }
+        """
+        tool_imports = set()
+        tool_inits = []
+        
+        for tool_id in enabled_tools:
+            # 从 CURATED_TOOLS 获取元数据
+            meta = next((t for t in CURATED_TOOLS if t['id'] == tool_id), None)
+            if not meta:
+                print(f"⚠️ Warning: Tool '{tool_id}' not found in CURATED_TOOLS")
+                continue
+            
+            # 1. 解析导入路径 (Python 处理,不在模板里做)
+            import_path = meta.get('import_path')
+            if not import_path:
+                print(f"⚠️ Warning: Tool '{tool_id}' missing import_path")
+                continue
+                
+            try:
+                module_path, class_name = import_path.rsplit(".", 1)
+            except ValueError:
+                print(f"⚠️ Warning: Invalid import_path for '{tool_id}': {import_path}")
+                continue
+            
+            tool_imports.add(f"from {module_path} import {class_name}")
+            
+            # 2. 准备初始化参数
+            init_params = []
+            
+            # 处理 API Key
+            if meta.get('requires_api_key'):
+                env_var = meta.get('env_var')
+                if env_var:
+                    init_params.append(f'api_key=os.getenv("{env_var}")')
+            
+            # 处理默认参数 (从 args_schema 提取)
+            args_schema = meta.get('args_schema', {})
+            properties = args_schema.get('properties', {})
+            
+            for prop_name, prop_def in properties.items():
+                if 'default' in prop_def:
+                    default_value = prop_def['default']
+                    if isinstance(default_value, str):
+                        init_params.append(f'{prop_name}="{default_value}"')
+                    else:
+                        init_params.append(f'{prop_name}={default_value}')
+            
+            tool_inits.append({
+                "name": meta.get('name', tool_id),
+                "id": tool_id,
+                "class_name": class_name,
+                "params": ", ".join(init_params),
+                "env_var": meta.get('env_var')
+            })
+        
+        return {
+            "tool_imports": sorted(list(tool_imports)),
+            "tool_inits": tool_inits
+        }
 
     def compile(
         self,
@@ -93,8 +191,10 @@ class Compiler:
                 "edges": graph.edges,
                 "conditional_edges": graph.conditional_edges,
                 "entry_point": graph.entry_point,
+                "entry_point": graph.entry_point,
                 # Tools and config
                 "enabled_tools": tools_config.enabled_tools,
+                "enabled_tools_meta": [t for t in CURATED_TOOLS if t['id'] in tools_config.enabled_tools],
                 "agent_type": project_meta.task_type,
                 "language": project_meta.language,
                 "custom_instructions": project_meta.description,
@@ -104,6 +204,15 @@ class Compiler:
             # Add RAG config if present
             if rag_config:
                 context["rag_config"] = rag_config
+
+            # 🆕 方案 A+: 预处理工具上下文
+            if len(tools_config.enabled_tools) > 0:
+                tool_context = self._prepare_tool_context(tools_config.enabled_tools)
+                context["tool_imports"] = tool_context["tool_imports"]
+                context["tool_inits"] = tool_context["tool_inits"]
+            else:
+                context["tool_imports"] = []
+                context["tool_inits"] = []
 
             # Generate agent.py
             agent_template = self.env.get_template("agent_template.py.j2")
@@ -311,6 +420,7 @@ class Compiler:
                     "deepeval>=0.21.0",
                     "pytest>=7.4.0",
                     "pytest-json-report>=1.5.0",
+                    "langchain-community>=0.2.0",  # Required for AgentZeroJudge adapters
                 ]
             )
 
@@ -444,8 +554,8 @@ fi
 # 安装依赖
 echo ""
 echo "开始安装依赖..."
-python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
-python3 -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+python3 -m pip install -q --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
+python3 -m pip install -q -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 检查安装结果
 if [ $? -eq 0 ]; then
@@ -513,8 +623,8 @@ if errorlevel 1 (
 REM 安装依赖
 echo.
 echo 开始安装依赖...
-python -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
-python -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+python -m pip install -q --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
+python -m pip install -q -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 REM 检查安装结果
 if errorlevel 1 (

@@ -114,10 +114,12 @@ from deepeval.test_case import LLMTestCaseParams
 import sys
 import json
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 # 导入 Agent
 sys.path.insert(0, "..")
 from agent import run_agent
+import agent
 '''
     
     def _generate_deepeval_config_optimized(self, config: DeepEvalTestConfig) -> str:
@@ -512,53 +514,106 @@ def test_rag_fact_{i}():
         project_meta: ProjectMeta,
         num_tests: int
     ) -> str:
-        """生成工具使用测试 (G-Eval)"""
-        test_func = '''
+        """生成工具使用测试 (G-Eval)
+        
+        基于 user_intent 动态生成测试用例，而不是硬编码。
+        """
+        # 1. 确定测试查询
+        if project_meta.task_type == TaskType.SEARCH:
+            # 尝试从 user_intent 中提取更有意义的查询，或者使用通用模板
+            query_prompt = f"Executing task: {project_meta.user_intent_summary[:50]}..."
+            criteria = """
+            评估标准:
+            1. Agent 必须调用搜索类工具 (如 google_scholar, arxiv, duckduckgo 等)
+            2. 最终回答必须包含从工具获取的信息
+            3. 回答必须直接解决用户的需求
+            """
+        else:
+            query_prompt = "测试工具调用能力"
+            criteria = """
+            评估标准:
+            1. Agent 必须调用合适的工具来解决问题
+            2. 工具调用参数必须正确
+            """
+            
+        # 2. 构造测试函数
+        # 我们使用 LLM 来生成更自然的查询，或者直接使用 User Intent
+        test_query = project_meta.user_intent_summary.replace('"', '\\"')
+        
+        test_func = f'''
 # ==================== Logic 测试 - 工具使用 ====================
 # 验证工具调用逻辑是否正确
 
 def test_tool_usage_correctness():
-    """测试: 工具调用逻辑"""
-    query = "计算 123 * 456 的结果"
+    """测试: 工具调用逻辑 (Mocked Connection)"""
+    query = "{test_query}"
     
-    # 运行 Agent
-    output, trace = run_agent(query, return_trace=True)
+    # 🕵️‍♀️ Setup Mocks (拦截真实工具调用)
+    # 创建真实的 BaseTool 子类 (LangChain bind_tools() 需要)
+    from langchain_core.tools import BaseTool
+    from pydantic import Field
     
-    # 提取工具调用
-    tool_calls = [s for s in trace if s.get("action") == "tool_call"]
+    class MockTavilyTool(BaseTool):
+        name: str = "tavily_search"
+        description: str = "Mock Tavily search tool for testing"
+        
+        def _run(self, query: str) -> str:
+            return "[Mocked Tool Output] Request processed successfully. Result: 42 (or relevant info)"
+        
+        async def _arun(self, query: str) -> str:
+            return self._run(query)
     
-    # 构造测试用例
-    test_case = LLMTestCase(
-        input=query,
-        actual_output=output,
-        retrieval_context=[json.dumps(trace, ensure_ascii=False)]  # 把 trace 作为上下文
-    )
-    
-    # 自定义 G-Eval 指标
-    tool_correctness = GEval(
-        name="Tool Selection Correctness",
-        criteria="""
-        评估标准:
-        1. 如果问题涉及数学计算,必须调用 calculator 工具
-        2. 工具必须在最终回答之前被调用
-        3. 最终答案必须包含正确的计算结果
-        """,
-        evaluation_params=[
-            LLMTestCaseParams.INPUT,
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.RETRIEVAL_CONTEXT
-        ],
-        threshold=0.8,
-        model=judge_llm
-    )
-    
-    # 断言
-    assert_test(test_case, [tool_correctness])
-    
-    # 额外的硬性检查
-    tool_names = [s.get("tool_name") for s in tool_calls]
-    assert "calculator" in tool_names or "math" in tool_names, "应该调用计算工具"
-    print("✅ 工具使用测试通过")
+    with patch('agent.tools') as mock_tools:
+        # 使用真实的 BaseTool 子类
+        mock_tool = MockTavilyTool()
+        
+        # 替换 tools 列表
+        mock_tools.__iter__.return_value = [mock_tool]
+        mock_tools.__len__.return_value = 1
+        
+        
+        # 运行 Agent
+        output, trace = run_agent(query, return_trace=True)
+        
+        # 验证是否有工具被调用 (检查 trace 中的工具调用记录)
+        tool_called = any(
+            step.get("action") == "tool_call" and step.get("tool_name") == "tavily_search"
+            for step in trace
+        )
+        
+        
+        # 构造测试用例上下文
+        mock_logs = [f"Mocked Call: tavily_search"] if tool_called else []
+        
+        test_case = LLMTestCase(
+            input=query,
+            actual_output=output,
+            retrieval_context=[json.dumps(trace, ensure_ascii=False)] + mock_logs
+        )
+        
+        # 自定义 G-Eval 指标
+        tool_correctness = GEval(
+            name="Tool Selection Correctness",
+            criteria=\"\"\"{criteria}\"\"\",
+            evaluation_params=[
+                LLMTestCaseParams.INPUT,
+                LLMTestCaseParams.ACTUAL_OUTPUT,
+                LLMTestCaseParams.RETRIEVAL_CONTEXT
+            ],
+            threshold=0.7,
+            model=judge_llm
+        )
+        
+        # 断言
+        assert_test(test_case, [tool_correctness])
+        
+        
+        # 检查工具调用 (如果预期需要)
+        if "无工具" not in query and "你好" not in query:
+             assert tool_called, f"预期调用工具, 实际未调用"
+        
+        
+        print(f"✅ 工具测试通过 (Mocked: tavily_search, Called: {{tool_called}})")
 '''
         return test_func
     

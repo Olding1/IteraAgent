@@ -62,6 +62,14 @@ class ProjectMeta(BaseModel):
     execution_plan: Optional[List[ExecutionStep]] = Field(
         default=None, description="Hierarchical task breakdown"
     )
+    
+    # 🆕 v7.4: Inference mode fields
+    confidence: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Inference confidence score"
+    )
+    missing_info: List[str] = Field(
+        default_factory=list, description="List of missing critical information"
+    )
 
     model_config = ConfigDict(
         use_enum_values=True,

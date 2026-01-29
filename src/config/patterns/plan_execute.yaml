@@ -1,0 +1,38 @@
+# Plan-Execute Pattern Template
+# Dynamic planning and execution loop
+
+description: "Breaks down complex tasks into steps and executes them one by one."
+
+default_nodes:
+  - id: "planner"
+    type: "llm"
+    role_description: "Responsible for creating and updating the plan."
+    
+  - id: "executor"
+    type: "llm"
+    role_description: "Responsible for executing the current step of the plan."
+    
+  - id: "replanner"
+    type: "llm"
+    role_description: "Analyzes results and decides whether to update the plan or finish."
+
+# Default conditional edges
+default_conditional_edges:
+  - source: "replanner"
+    condition: "should_end_or_replan"
+    condition_logic: |
+      # Check if plan is finished
+      if state.get("is_finished"):
+          return "end"
+      return "continue"
+    branches:
+      end: "END"
+      continue: "executor" # Loop back to execute next step
+
+# Default normal edges
+default_edges:
+  - source: "planner"
+    target: "executor"
+  
+  - source: "executor"
+    target: "replanner"

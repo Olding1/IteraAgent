@@ -245,6 +245,10 @@ Clarification Q&A:
 Based on the clarification answers, refine the project metadata.
 Output the complete refined JSON object with the same structure.
 Set clarification_needed to false.
+
+IMPORTANT:
+1. If 'agent_name' is "pending", YOU MUST GENERATE A CREATIVE NAME based on the requirements.
+2. Ensure 'description' and 'user_intent_summary' incorporate the new details from clarification.
 """
         return prompt
     
@@ -528,6 +532,115 @@ Set clarification_needed to false.
         project_meta.status = "ready"
         
         return project_meta
+    
+    async def analyze_with_inference(
+        self,
+        user_input: str,
+        file_paths: Optional[List[Path]] = None
+    ) -> ProjectMeta:
+        """Inference-based analysis with confidence scoring (v7.4).
+        
+        This method performs requirement analysis and automatically calculates
+        confidence score and identifies missing information.
+        
+        Args:
+            user_input: User's requirement description
+            file_paths: Optional file paths
+            
+        Returns:
+            ProjectMeta with confidence and missing_info fields populated
+        """
+        # Step 1: Perform basic analysis
+        project_meta = await self.analyze_requirements(user_input, file_paths)
+        
+        # Step 2: Calculate confidence score
+        confidence = self._calculate_confidence(project_meta, user_input)
+        project_meta.confidence = confidence
+        
+        # Step 3: Identify missing information
+        missing_info = self._identify_missing_info(project_meta)
+        project_meta.missing_info = missing_info
+        
+        # Step 4: If confidence is low or has missing info, enter clarification
+        if confidence < 0.7 or missing_info:
+            project_meta.status = "clarifying"
+            # Generate clarification questions
+            questions = await self.ask_clarification(project_meta)
+            project_meta.clarification_questions = questions
+            project_meta.clarification_needed = True
+        else:
+            project_meta.status = "ready"
+            # Generate execution plan if complex
+            if project_meta.complexity_score >= 4:
+                execution_plan = await self.create_execution_plan(project_meta)
+                project_meta.execution_plan = execution_plan
+        
+        return project_meta
+    
+    def _calculate_confidence(self, project_meta: ProjectMeta, user_input: str) -> float:
+        """Calculate inference confidence score.
+        
+        Args:
+            project_meta: Project metadata
+            user_input: Original user input
+            
+        Returns:
+            Confidence score (0.0-1.0)
+        """
+        confidence = 1.0
+        
+        # Factor 1: Input length (too short = less confident)
+        if len(user_input) < 20:
+            confidence -= 0.3
+        elif len(user_input) < 50:
+            confidence -= 0.1
+        
+        # Factor 2: Task type clarity
+        if project_meta.task_type == TaskType.CUSTOM:
+            confidence -= 0.2
+        
+        # Factor 3: Complexity vs execution plan
+        if project_meta.complexity_score > 5 and not project_meta.execution_plan:
+            confidence -= 0.2
+        
+        # Factor 4: RAG without files
+        if project_meta.has_rag and not project_meta.file_paths:
+            confidence -= 0.3
+        
+        # Factor 5: Description quality
+        if len(project_meta.description) < 30:
+            confidence -= 0.1
+        
+        return max(0.0, min(1.0, confidence))
+    
+    def _identify_missing_info(self, project_meta: ProjectMeta) -> List[str]:
+        """Identify missing critical information.
+        
+        Args:
+            project_meta: Project metadata
+            
+        Returns:
+            List of missing information descriptions
+        """
+        missing = []
+        
+        # Check for missing execution steps
+        if project_meta.complexity_score > 5 and not project_meta.execution_plan:
+            missing.append("具体的实现步骤和流程")
+        
+        # Check for RAG file paths
+        if project_meta.has_rag and not project_meta.file_paths:
+            missing.append("知识库文件路径或文档来源")
+        
+        # Check for vague descriptions
+        if len(project_meta.description) < 30:
+            missing.append("详细的功能描述")
+        
+        # Check for unclear intent
+        if len(project_meta.user_intent_summary) < 20:
+            missing.append("明确的使用场景和目标")
+        
+        return missing
     
     # ==================== Helper Methods ====================
     

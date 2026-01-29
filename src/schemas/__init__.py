@@ -20,6 +20,7 @@ from .simulation import (
     SimulationStepType,
 )
 from .data_profile import DataProfile, FileInfo
+from .tool_schema import ToolDefinition, ToolValidationError, ToolValidationResult
 
 __all__ = [
     # Project metadata
@@ -46,6 +47,9 @@ __all__ = [
     "RAGConfig",
     # Tools
     "ToolsConfig",
+    "ToolDefinition",
+    "ToolValidationError",
+    "ToolValidationResult",
     # Testing
     "TestCase",
     "TestSuite",

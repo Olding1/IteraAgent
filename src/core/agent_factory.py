@@ -26,7 +26,9 @@ from .judge import Judge
 from .rag_builder import RAGBuilder
 from .tool_selector import ToolSelector
 from .report_manager import ReportManager
+from .report_manager import ReportManager
 from ..utils.git_utils import GitUtils
+from ..tools.definitions import CURATED_TOOLS
 
 class AgentFactory:
     """Agent 工厂 - 编排所有组件生成 Agent"""
@@ -38,6 +40,13 @@ class AgentFactory:
     ):
         self.config = config or AgentFactoryConfig.from_env()
         self.callback = callback
+        
+        # 🆕 v8.0: Load Curated Tools into Registry
+        # This ensures Interface Guard can validate tool parameters
+        from ..tools import get_global_registry
+        registry = get_global_registry()
+        for tool_def in CURATED_TOOLS:
+            registry.register_definition(tool_def)
         
         # Initialize Core Components
         self.builder_client = BuilderClient.from_env()
@@ -292,9 +301,17 @@ class AgentFactory:
                 self.callback.on_log("运行沙盘推演...")
                 
             # Create a sample input for simulation
-            # Create a sample input for simulation based on task type
+            # Create a sample input for simulation based on task type and tools
             if meta.has_rag:
                 sample_input = "Agent Zero 是什么项目？"  # Trigger RAG keywords
+            elif tools_config and tools_config.enabled_tools:
+                 # Check for search tools specifically
+                 search_tools = ["tavily_search", "google_search", "bing_search", "duckduckgo_search"]
+                 if any(t in tools_config.enabled_tools for t in search_tools):
+                     sample_input = "搜索一下最新的 AI 新闻"
+                 else:
+                     # Generic tool trigger
+                     sample_input = f"使用 {tools_config.enabled_tools[0]} 工具解决一个简单问题"
             elif meta.task_type == "search":
                 sample_input = "搜索一下最新的 AI 新闻"
             else:
@@ -352,6 +369,9 @@ class AgentFactory:
             git = GitUtils(agent_dir)
             git.init_repo()
             git.commit("Initial generation")
+
+        # 🆕 Check API Keys (Before running anything)
+        await self._check_and_prompt_keys(agent_dir, tools_config)
 
         # 🆕 Phase 6: Initialize ReportManager
         report_manager = ReportManager(agent_dir)
@@ -810,4 +830,56 @@ Return ONLY the full corrected code content, without markdown code blocks.
         if judge_result.error_type and judge_result.error_type != "none":
             error_counts[judge_result.error_type] = 1
         return error_counts
+
+    async def _check_and_prompt_keys(self, agent_dir: Path, tools_config: Optional[ToolsConfig]):
+        """检查并提示缺失的 API Keys"""
+        if not tools_config or not tools_config.enabled_tools:
+            return
+
+        from dotenv import dotenv_values, set_key
+        env_path = agent_dir / ".env"
+        if not env_path.exists():
+            return
+            
+        current_env = dotenv_values(env_path)
+        tool_map = {t['id']: t for t in CURATED_TOOLS}
+        
+        for tool_id in tools_config.enabled_tools:
+            tool_def = tool_map.get(tool_id)
+            if not tool_def or not tool_def.get('requires_api_key'):
+                continue
+                
+            env_var = tool_def.get('env_var')
+            if not env_var:
+                continue
+            
+            # Check if key is set (skip if already in .env with value)
+            if current_env.get(env_var):
+                continue
+                
+            # Ask LLM for help text
+            help_text = ""
+            try:
+                # Simple prompt for fast response
+                prompt = (
+                    f"Provide a very short guide (1 sentence + URL) on how to get "
+                    f"the API Key ('{env_var}') for the tool '{tool_def['name']}'. "
+                    f"Return ONLY the text."
+                )
+                help_text = await self.builder_client.call(prompt)
+                help_text = help_text.strip().replace('"', '')
+            except Exception:
+                pass
+                
+            # Callback to prompt user
+            if self.callback:
+                key = self.callback.on_api_key_missing(tool_def['name'], env_var, help_text)
+                if key:
+                    # Save to .env
+                    set_key(env_path, env_var, key)
+                    current_env[env_var] = key # Update cache
+                    if self.callback:
+                        self.callback.on_log(f"✅ 已保存 {env_var}")
+                    if self.callback:
+                        self.callback.on_log(f"✅ 已保存 {env_var}")
 

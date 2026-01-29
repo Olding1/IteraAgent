@@ -21,7 +21,8 @@ from src.llm import (
 def print_banner():
     """Print Agent Zero banner."""
     print("=" * 70)
-    print("🚀 Agent Zero v6.0 - 智能 Agent 构建工厂")
+    print("🚀 Agent Zero v8.0 - 智能 Agent 构建工厂")
+    print("   🆕 Interface Guard | 🔍 Tool Discovery | 📚 16+ Tools")
     print("=" * 70)
     print()
 

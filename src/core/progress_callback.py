@@ -60,3 +60,17 @@ class ProgressCallback(Protocol):
         """普通日志"""
         ...
 
+    def on_api_key_missing(self, tool_name: str, env_var: str, help_text: str = "") -> str:
+        """
+        API Key 缺失回调
+        
+        Args:
+            tool_name: 工具名称
+            env_var: 环境变量名
+            help_text: 获取帮助文本
+            
+        Returns:
+            用户输入的 Key (或空)
+        """
+        ...
+

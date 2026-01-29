@@ -48,6 +48,50 @@ class Runner:
         self.agent_dir = Path(agent_dir).absolute()  # 确保使用绝对路径
         self.venv_python = self._find_python_executable()
     
+    # 🆕 Helper to print trace
+    def _print_trace(self, agent_dir: Path):
+        try:
+            # 尝试加载最新的 trace
+            trace_dir = agent_dir / ".trace"
+            if trace_dir.exists():
+                trace_files = sorted(trace_dir.glob("*.json"), key=os.path.getmtime, reverse=True)
+                if trace_files:
+                    latest_trace = trace_files[0]
+                    from src.utils.trace_visualizer import print_trace_summary
+                    
+                    # Load json
+                    with open(latest_trace, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    # Mock SimulationResult object for compatibility if needed, 
+                    # or just pass dict if supported.
+                    # Assuming print_trace_summary takes a dict or we need to construct object.
+                    # For simplicity, let's implement a simple printer here or use the util if adapted.
+                    print("\n" + "="*50)
+                    print("📊 Agent Execution Trace Summary")
+                    print("="*50)
+                    
+                    steps = data.get("steps", [])
+                    print(f"Total Steps: {len(steps)}")
+                    print(f"Status: {'✅ Success' if data.get('success') else '❌ Failed'}")
+                    
+                    print("\nExecution Flow:")
+                    for step in steps:
+                        icon = "✅" if step.get('step_type') == 'success' else "❌" if step.get('step_type') == 'failed' else "➡️"
+                        print(f"  {icon} [{step.get('node_id')}] {step.get('description')}")
+                        if step.get('tool_calls'):
+                             for tc in step['tool_calls']:
+                                 print(f"     🔨 Tool: {tc.get('tool_name')}")
+                    
+                    if data.get("issues"):
+                        print("\n⚠️  Issues Detected:")
+                        for issue in data['issues']:
+                            print(f"  - [{issue.get('severity')}] {issue.get('description')}")
+                    print("="*50 + "\n")
+                    
+        except Exception as e:
+            print(f"⚠️ Failed to print trace summary: {e}")
+    
     def _find_python_executable(self) -> Path:
         """查找 Python 可执行文件
         
@@ -139,6 +183,10 @@ class Runner:
         # 运行 pytest
         try:
             result = self._run_pytest(test_file, timeout)
+            
+            # 🆕 Print trace summary after execution
+            self._print_trace(self.agent_dir)
+            
             return result
         except subprocess.TimeoutExpired:
             return ExecutionResult(

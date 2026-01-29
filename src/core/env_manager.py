@@ -3,9 +3,13 @@
 import os
 import sys
 import subprocess
+import time
 from pathlib import Path
 from typing import Optional
 from pydantic import BaseModel, Field
+
+from ..utils.uv_downloader import UVDownloader
+from ..utils.performance_metrics import PerformanceMetrics
 
 
 class EnvSetupResult(BaseModel):
@@ -17,6 +21,8 @@ class EnvSetupResult(BaseModel):
     error_message: Optional[str] = Field(
         default=None, description="Error message if setup failed"
     )
+    used_uv: bool = Field(default=False, description="Whether uv was used")
+    metrics: Optional[dict] = Field(default=None, description="Performance metrics")
 
 
 class EnvManager:
@@ -26,47 +32,44 @@ class EnvManager:
     without requiring Docker.
     """
 
-    def __init__(self, agent_dir: Path):
+    def __init__(self, agent_dir: Path, use_uv: bool = True):
         """Initialize environment manager.
         
         Args:
             agent_dir: Path to agent project directory
+            use_uv: Whether to use uv for faster installation (default: True)
         """
         self.agent_dir = Path(agent_dir).resolve()  # Convert to absolute path
         self.venv_path = self.agent_dir / ".venv"
         self._python_exe: Optional[Path] = None
+        self.use_uv = use_uv
+        self._uv_path: Optional[Path] = None
+        self.metrics = PerformanceMetrics()
+        
+        # Initialize UV downloader if enabled
+        if self.use_uv:
+            project_root = self.agent_dir.parent.parent  # Assume agents/xxx structure
+            self.uv_downloader = UVDownloader(project_root)
 
-    async def setup_environment(self) -> EnvSetupResult:
+    def setup_environment(self) -> EnvSetupResult:
         """Create virtual environment and install dependencies.
         
         Returns:
             EnvSetupResult with success status and paths
         """
+        used_uv = False
+        
         try:
-            # Create venv if it doesn't exist
-            if not self.venv_path.exists():
-                print(f"Creating virtual environment at {self.venv_path}...")
-                await self._create_venv()
-
-            # Get Python executable
-            python_exe = self.get_python_executable()
-
-            # Install requirements
-            requirements_file = self.agent_dir / "requirements.txt"
-            if requirements_file.exists():
-                print("Installing dependencies...")
-                install_success = await self.install_requirements()
-                if not install_success:
-                    return EnvSetupResult(
-                        success=False,
-                        venv_path=self.venv_path,
-                        python_executable=python_exe,
-                        error_message="Failed to install dependencies",
-                    )
-
-            return EnvSetupResult(
-                success=True, venv_path=self.venv_path, python_executable=python_exe
-            )
+            # Try uv first if enabled
+            if self.use_uv:
+                try:
+                    return self._setup_with_uv()
+                except Exception as e:
+                    print(f"⚠️  uv setup failed: {e}")
+                    print("   Falling back to venv...")
+            
+            # Fallback to standard venv
+            return self._setup_with_venv()
 
         except Exception as e:
             return EnvSetupResult(
@@ -74,16 +77,118 @@ class EnvManager:
                 venv_path=self.venv_path,
                 python_executable=Path(""),
                 error_message=f"Environment setup failed: {str(e)}",
+                used_uv=used_uv,
+                metrics=self.metrics.to_dict()
             )
+    
+    def _setup_with_uv(self) -> EnvSetupResult:
+        """Setup environment using uv.
+        
+        Returns:
+            EnvSetupResult
+        """
+        print("⚡ Using uv for fast environment setup...")
+        
+        # Ensure uv is available
+        self.metrics.start_timer("download")
+        self._uv_path = self.uv_downloader.ensure_uv()
+        self.metrics.stop_timer("download")
+        
+        # Create venv if it doesn't exist
+        if not self.venv_path.exists():
+            print(f"⚡ Creating virtual environment with uv...")
+            self.metrics.start_timer("venv_create")
+            self._create_venv_with_uv()
+            self.metrics.stop_timer("venv_create")
 
-    async def _create_venv(self) -> None:
+        # Get Python executable
+        python_exe = self.get_python_executable()
+
+        # Install requirements
+        requirements_file = self.agent_dir / "requirements.txt"
+        if requirements_file.exists():
+            print("⚡ Installing dependencies with uv...")
+            self.metrics.start_timer("install")
+            install_success = self._install_with_uv(requirements_file)
+            self.metrics.stop_timer("install")
+            
+            if not install_success:
+                raise RuntimeError("uv pip install failed")
+        
+        # Report performance
+        self.metrics.report()
+
+        return EnvSetupResult(
+            success=True,
+            venv_path=self.venv_path,
+            python_executable=python_exe,
+            used_uv=True,
+            metrics=self.metrics.to_dict()
+        )
+    
+    def _setup_with_venv(self) -> EnvSetupResult:
+        """Setup environment using standard venv.
+        
+        Returns:
+            EnvSetupResult
+        """
+        print("Using standard venv...")
+        
+        # Create venv if it doesn't exist
+        if not self.venv_path.exists():
+            print(f"Creating virtual environment at {self.venv_path}...")
+            self.metrics.start_timer("venv_create")
+            self._create_venv()
+            self.metrics.stop_timer("venv_create")
+
+        # Get Python executable
+        python_exe = self.get_python_executable()
+
+        # Install requirements
+        requirements_file = self.agent_dir / "requirements.txt"
+        if requirements_file.exists():
+            print("Installing dependencies...")
+            self.metrics.start_timer("install")
+            install_success = self.install_requirements()
+            self.metrics.stop_timer("install")
+            
+            if not install_success:
+                return EnvSetupResult(
+                    success=False,
+                    venv_path=self.venv_path,
+                    python_executable=python_exe,
+                    error_message="Failed to install dependencies",
+                    used_uv=False,
+                    metrics=self.metrics.to_dict()
+                )
+        
+        # Report performance
+        self.metrics.report()
+
+        return EnvSetupResult(
+            success=True,
+            venv_path=self.venv_path,
+            python_executable=python_exe,
+            used_uv=False,
+            metrics=self.metrics.to_dict()
+        )
+
+    def _create_venv(self) -> None:
         """Create virtual environment using venv module."""
-        process = await self._run_command(
+        process = self._run_command(
             [sys.executable, "-m", "venv", str(self.venv_path)], cwd=self.agent_dir
         )
 
         if process.returncode != 0:
             raise RuntimeError(f"Failed to create venv: {process.stderr}")
+    
+    def _create_venv_with_uv(self) -> None:
+        """Create virtual environment using uv."""
+        cmd = [str(self._uv_path), "venv", str(self.venv_path)]
+        process = self._run_command(cmd, cwd=self.agent_dir, timeout=10)
+        
+        if process.returncode != 0:
+            raise RuntimeError(f"uv venv failed: {process.stderr}")
 
     def get_python_executable(self) -> Path:
         """Get path to Python executable in virtual environment.
@@ -106,7 +211,7 @@ class EnvManager:
         self._python_exe = python_exe
         return python_exe
 
-    async def install_requirements(self) -> bool:
+    def install_requirements(self) -> bool:
         """Install dependencies from requirements.txt.
         
         Returns:
@@ -137,13 +242,46 @@ class EnvManager:
             cmd.extend(["-i", pip_config["index_url"]])
 
         print(f"Running: {' '.join(cmd)}")
-        process = await self._run_command(cmd, cwd=self.agent_dir, timeout=300)
+        process = self._run_command(cmd, cwd=self.agent_dir, timeout=300)
 
         if process.returncode != 0:
             print(f"Installation failed: {process.stderr}")
             return False
 
         print("Dependencies installed successfully")
+        return True
+    
+    def _install_with_uv(self, requirements_file: Path) -> bool:
+        """Install dependencies using uv.
+        
+        Args:
+            requirements_file: Path to requirements.txt
+            
+        Returns:
+            True if installation succeeded
+        """
+        python_exe = self.get_python_executable()
+        cmd = [
+            str(self._uv_path),
+            "pip",
+            "install",
+            "-q",  # 🆕 Quiet mode
+            "-r",
+            str(requirements_file),
+            "--python",
+            str(python_exe)
+        ]
+        
+        # print(f"Running: {' '.join(cmd)}") # 🤫 Suppress command printing
+        
+        # 🆕 Suppress stdout/stderr unless error
+        process = self._run_command(cmd, cwd=self.agent_dir, timeout=300)
+        
+        if process.returncode != 0:
+            print(f"uv pip install failed: {process.stderr}")
+            return False
+        
+        # print("Dependencies installed successfully with uv") # 🤫 Suppress success message
         return True
 
     def _get_pip_config(self) -> Optional[dict]:
@@ -158,7 +296,7 @@ class EnvManager:
             "trusted_host": "pypi.tuna.tsinghua.edu.cn",
         }
 
-    async def _run_command(
+    def _run_command(
         self,
         cmd: list[str],
         cwd: Path,

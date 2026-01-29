@@ -1,6 +1,8 @@
 """Tool Selector - Selects appropriate tools based on requirements."""
 
-from typing import List, Optional
+from typing import List, Optional, Dict
+import json
+import re
 
 from ..schemas import ProjectMeta, ToolsConfig
 from ..tools import ToolRegistry, get_global_registry
@@ -30,6 +32,10 @@ class ToolSelector:
         """
         self.builder = builder_client
         self.registry = registry or get_global_registry()
+        
+        # 🆕 v8.0: Tool Discovery Engine
+        from .tool_discovery import ToolDiscoveryEngine
+        self.discovery = ToolDiscoveryEngine()
     
     async def select_tools(
         self,
@@ -38,183 +44,109 @@ class ToolSelector:
     ) -> ToolsConfig:
         """Select tools based on project requirements.
         
-        Args:
-            project_meta: Project metadata
-            max_tools: Maximum number of tools to select
-            
-        Returns:
-            ToolsConfig with selected tools
+        Using 2-stage architecture:
+        1. Recall (Rough Search): Top-K from vector/keyword search
+        2. Rerank (Fine-grained): LLM Judge
         """
-        # Use heuristic selection first
-        selected_tools = self._heuristic_selection(project_meta, max_tools)
-        
-        # Optionally refine with LLM
-        try:
-            refined_tools = await self._llm_refine_selection(
-                project_meta, selected_tools, max_tools
-            )
-            return ToolsConfig(enabled_tools=refined_tools)
-        except Exception as e:
-            print(f"Warning: LLM refinement failed, using heuristic selection: {e}")
-            return ToolsConfig(enabled_tools=selected_tools)
-    
-    def _heuristic_selection(
-        self,
-        project_meta: ProjectMeta,
-        max_tools: int
-    ) -> List[str]:
-        """Select tools using heuristic rules.
-        
-        Args:
-            project_meta: Project metadata
-            max_tools: Maximum number of tools
-            
-        Returns:
-            List of selected tool names
-        """
-        # Build search query from project description and intent
+        # --- Stage 1: Recall (粗筛) ---
+        # Build search query
         query = f"{project_meta.description} {project_meta.user_intent_summary}"
+        print(f"🔍 [ToolSelector] Query: '{query}'")
         
-        # Search for matching tools
-        matching_tools = self.registry.search(query, top_k=max_tools * 2)
+        # Get more candidates for LLM to choose from (e.g. 10)
+        candidates = self.discovery.search(query, top_k=max_tools * 2)
         
-        # Apply task-type specific rules
-        selected = []
-        
-        # For SEARCH tasks, prioritize search tools
-        if project_meta.task_type == "search":
-            search_tools = self.registry.list_tools(category="search")
-            for tool in search_tools:
-                if tool in matching_tools and tool not in selected:
-                    selected.append(tool)
-        
-        # For ANALYSIS tasks, prioritize code/math tools
-        elif project_meta.task_type == "analysis":
-            code_tools = self.registry.list_tools(category="code")
-            math_tools = self.registry.list_tools(category="math")
+        if not candidates:
+            print("⚠️ [ToolSelector] 粗筛未找到任何工具")
+            return ToolsConfig(enabled_tools=[])
             
-            for tool in code_tools + math_tools:
-                if tool in matching_tools and tool not in selected:
-                    selected.append(tool)
-        
-        # Add remaining matching tools
-        for tool in matching_tools:
-            if tool not in selected:
-                selected.append(tool)
-            
-            if len(selected) >= max_tools:
-                break
-        
-        return selected[:max_tools]
-    
-    async def _llm_refine_selection(
+        print(f"🔍 [ToolSelector] 粗筛候选项 ({len(candidates)}): {[t['name'] for t in candidates]}")
+
+        # --- Stage 2: Rerank (精排) ---
+        try:
+            selected_ids = await self._llm_rerank(project_meta, candidates, max_tools)
+            print(f"🎯 [ToolSelector] 精排结果: {selected_ids}")
+            return ToolsConfig(enabled_tools=selected_ids)
+        except Exception as e:
+            print(f"⚠️ [ToolSelector] LLM Rerank 失败, 回退到粗筛结果: {e}")
+            import traceback
+            traceback.print_exc()
+            # Fallback: just return top max_tools from recall
+            fallback_ids = [t['id'] for t in candidates[:max_tools]]
+            return ToolsConfig(enabled_tools=fallback_ids)
+
+    async def _llm_rerank(
         self,
         project_meta: ProjectMeta,
-        candidate_tools: List[str],
+        candidates: List[Dict],
         max_tools: int
     ) -> List[str]:
-        """Refine tool selection using LLM.
+        """Call LLM to rerank and select best tools."""
         
-        Args:
-            project_meta: Project metadata
-            candidate_tools: Candidate tool names
-            max_tools: Maximum number of tools
-            
-        Returns:
-            Refined list of tool names
-        """
-        # Get tool descriptions
-        tool_descriptions = []
-        for tool_name in candidate_tools:
-            metadata = self.registry.get_metadata(tool_name)
-            if metadata:
-                tool_descriptions.append(
-                    f"- {tool_name}: {metadata.description}"
-                )
+        # 1. Build candidate descriptions
+        tools_desc = []
+        for idx, tool in enumerate(candidates):
+            # Format: 0. [Tavily Search] (id: tavily_search): Search the web...
+            tools_desc.append(f"{idx}. [{tool['name']}] (id: {tool['id']}): {tool['description'][:200]}...")
         
-        prompt = self._build_selection_prompt(
-            project_meta, tool_descriptions, max_tools
-        )
-        
-        response = await self.builder.call(prompt=prompt)
-        
-        # Parse tool names from response
-        selected_tools = self._parse_tool_names(response, candidate_tools)
-        
-        return selected_tools[:max_tools]
-    
-    def _build_selection_prompt(
-        self,
-        project_meta: ProjectMeta,
-        tool_descriptions: List[str],
-        max_tools: int
-    ) -> str:
-        """Build prompt for LLM tool selection.
-        
-        Args:
-            project_meta: Project metadata
-            tool_descriptions: List of tool descriptions
-            max_tools: Maximum number of tools
-            
-        Returns:
-            Prompt string
-        """
-        tools_text = "\n".join(tool_descriptions)
-        
-        prompt = f"""You are selecting tools for an AI agent.
+        tools_str = "\n".join(tools_desc)
 
-Project Information:
-- Agent name: {project_meta.agent_name}
-- Description: {project_meta.description}
-- Task type: {project_meta.task_type}
-- User intent: {project_meta.user_intent_summary}
+        # 2. Build Prompt
+        prompt = f"""You are an expert Tool Selector for an AI Agent.
+Your task is to select the most appropriate tools from a candidate list to solve the user's request.
 
-Available Tools:
-{tools_text}
+# Project Context
+Agent Name: {project_meta.agent_name}
+User Intent: "{project_meta.user_intent_summary}"
+Process Description: "{project_meta.description}"
+Task Type: {project_meta.task_type}
 
-Select up to {max_tools} most relevant tools for this agent.
-Consider:
-1. What capabilities does the agent need?
-2. Which tools best match the task type?
-3. Are there any redundant tools?
+# Candidate Tools
+{tools_str}
 
-Output only the tool names, one per line, in order of importance.
+# Selection Rules (CRITICAL)
+1. Analyze the user's intent carefully.
+2. Select tools that are NECESSARY to solve the problem.
+3. If multiple tools do similar things (e.g. Google vs DuckDuckGo), pick the most capable one (e.g. Tavily/Google over DuckDuckGo).
+4. For searching news/events -> Prioritize 'Tavily Search' or 'Google Search'.
+5. For math/data/plotting -> Prioritize 'Python REPL' (better than Calculator).
+6. If NO tools are needed (e.g. pure chit-chat), return empty selection.
+7. Select at most {max_tools} tools.
+
+# Output Format
+Return a JSON object with a single key "selected_indices".
+Example: {{ "selected_indices": [0, 2] }}
 """
-        return prompt
-    
-    def _parse_tool_names(
-        self,
-        response: str,
-        candidate_tools: List[str]
-    ) -> List[str]:
-        """Parse tool names from LLM response.
         
-        Args:
-            response: LLM response text
-            candidate_tools: List of valid tool names
-            
-        Returns:
-            List of parsed tool names
-        """
-        lines = response.strip().split('\n')
-        selected = []
+        # 3. Call LLM
+        response = await self.builder.call(prompt)
         
-        for line in lines:
-            line = line.strip()
-            
-            # Remove numbering, bullets, etc.
-            import re
-            cleaned = re.sub(r'^[\d\.\-\*\)]+\s*', '', line)
-            cleaned = cleaned.strip()
-            
-            # Check if it matches a candidate tool
-            for tool in candidate_tools:
-                if tool.lower() in cleaned.lower():
-                    if tool not in selected:
-                        selected.append(tool)
-                    break
+        # 4. Parse JSON
         
-        return selected
+        # Clean markdown if present
+        json_str = response.replace("```json", "").replace("```", "").strip()
+        # Find JSON object
+        match = re.search(r'\{.*\}', json_str, re.DOTALL)
+        if match:
+            json_str = match.group(0)
+            
+        try:
+            result = json.loads(json_str)
+            indices = result.get("selected_indices", [])
+            
+            # 5. Map back to IDs
+            selected_ids = []
+            for idx in indices:
+                if isinstance(idx, int) and 0 <= idx < len(candidates):
+                    # Prevent duplicates
+                    tid = candidates[idx]['id']
+                    if tid not in selected_ids:
+                        selected_ids.append(tid)
+                    
+            return selected_ids
+        except json.JSONDecodeError:
+            print(f"❌ [ToolSelector] JSON Decode Error: {response}")
+            raise
     
     def save_config(self, config: ToolsConfig, output_path) -> None:
         """Save tools config to JSON file.
