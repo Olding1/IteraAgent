@@ -6,19 +6,32 @@ Runner - DeepEval 测试执行器
 2. 运行 pytest 测试
 3. 解析 JSON 报告
 4. 返回执行结果
+5. 🆕 Phase 5: 支持 HITL 暂停/继续/停止控制
 
 优化点:
 - 不再运行时安装 DeepEval (优化 2)
 - 只检查是否已安装,未安装则提示用户
+- 🆕 线程安全的执行控制
 """
 
 import subprocess
 import json
+import threading
+import time
 from pathlib import Path
 from typing import Optional
+from enum import Enum
+from queue import Queue
 from pydantic import BaseModel, Field
 
 from src.schemas.execution_result import ExecutionResult, ExecutionStatus
+
+
+class ExecutionControl(Enum):
+    """执行控制状态"""
+    RUNNING = "running"
+    PAUSED = "paused"
+    STOPPED = "stopped"
 
 
 class DeepEvalTestResult(BaseModel):
@@ -33,20 +46,27 @@ class DeepEvalTestResult(BaseModel):
 
 class Runner:
     """Agent 执行器 (DeepEval 版本)
-    
+
     优化点:
     - 不再运行时安装 DeepEval
     - 使用 pytest-json-report 获取结构化结果
+    - 🆕 Phase 5: 支持 HITL 控制 (暂停/继续/停止)
     """
-    
+
     def __init__(self, agent_dir: Path):
         """初始化 Runner
-        
+
         Args:
             agent_dir: Agent 项目目录
         """
         self.agent_dir = Path(agent_dir).absolute()  # 确保使用绝对路径
         self.venv_python = self._find_python_executable()
+
+        # 🆕 Phase 5: HITL 控制
+        self.control = ExecutionControl.RUNNING
+        self.status_queue = Queue()  # 状态队列，供 UI 轮询
+        self.log_queue = Queue()     # 日志队列
+        self.current_process: Optional[subprocess.Popen] = None  # 当前运行的进程
     
     # 🆕 Helper to print trace
     def _print_trace(self, agent_dir: Path):
@@ -121,6 +141,47 @@ class Runner:
         import sys
         print(f"⚠️ [Runner] 未找到 venv,使用系统 Python: {sys.executable}")
         return Path(sys.executable)
+
+    # 🆕 Phase 5: HITL 控制方法
+    def pause(self):
+        """暂停执行"""
+        self.control = ExecutionControl.PAUSED
+        self.status_queue.put({"status": "paused", "message": "执行已暂停"})
+        self.log_queue.put({"level": "WARNING", "message": "执行已暂停"})
+
+    def resume(self):
+        """继续执行"""
+        self.control = ExecutionControl.RUNNING
+        self.status_queue.put({"status": "running", "message": "执行已继续"})
+        self.log_queue.put({"level": "INFO", "message": "执行已继续"})
+
+    def stop(self):
+        """停止执行"""
+        self.control = ExecutionControl.STOPPED
+        self.status_queue.put({"status": "stopped", "message": "执行已停止"})
+        self.log_queue.put({"level": "ERROR", "message": "执行已停止"})
+
+        # 终止当前进程
+        if self.current_process and self.current_process.poll() is None:
+            self.current_process.terminate()
+            try:
+                self.current_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.current_process.kill()
+
+    def get_status(self) -> str:
+        """获取当前状态"""
+        return self.control.value
+
+    def _check_control_state(self):
+        """检查控制状态（在关键点调用）"""
+        # 如果暂停，等待恢复
+        while self.control == ExecutionControl.PAUSED:
+            time.sleep(0.1)
+
+        # 如果停止，抛出异常
+        if self.control == ExecutionControl.STOPPED:
+            raise RuntimeError("执行已被用户停止")
     
     def setup_environment(self) -> bool:
         """设置运行环境 (安装依赖)"""

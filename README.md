@@ -1,123 +1,428 @@
-# Agent Zero v8.0
+<div align="center">
 
-**Slogan:** Define logic, generate graph, auto-deploy.
+# 🤖 Agent Zero
 
-## 🎯 项目简介
+**Define Logic, Generate Graph, Auto-Deploy**
 
-Agent Zero 是一款桌面端、本地化、全自动的智能体构建工厂。通过元编程将自然语言转化为 LangGraph 拓扑,并在本地隔离环境中完成代码生成、依赖安装、测试闭环与自我修复。
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Powered-green.svg)](https://github.com/langchain-ai/langgraph)
 
-### 核心特性
+*An intelligent platform for building, testing, optimizing, and deploying production-ready AI agents*
 
-- **Graph as Code**: JSON 中间层解耦业务逻辑与代码实现
-- **无 Docker 化**: 使用 Python venv 实现轻量级环境隔离
-- **API 双轨制**: 区分构建用模型和运行用模型
-- **主动进化**: 利用 LangChain MCP 协议实现依赖库主动重构
-- **🆕 Interface Guard**: 基于 Pydantic 的参数验证和 LLM 自动修复 (v8.0)
-- **🆕 工具发现引擎**: 16+ 精选工具的本地索引和智能搜索 (v8.0)
+[Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Examples](#-examples)
 
-## 🚀 快速开始
+</div>
 
-### 环境要求
+---
 
-- Python 3.11+
+## 🎯 What is Agent Zero?
+
+Agent Zero is a **complete AI agent lifecycle management platform** that transforms your ideas into production-ready agents through an automated, AI-driven workflow.
+
+```
+Your Idea → AI Design → Auto-Generate → Test & Optimize → Deploy to Dify
+```
+
+**Key Differentiators:**
+- 🧠 **AI-Powered Design** - Intelligent graph structure generation using proven design patterns
+- 🔄 **Self-Optimizing** - Automatic testing and iterative improvement with LLM-driven analysis
+- 📦 **One-Click Export** - Deploy to Dify and other platforms instantly
+- 🎨 **Multiple Interfaces** - CLI, Web UI, Chat UI, and Python API
+- 🛡️ **Production-Ready** - Built-in validation, error handling, and subprocess isolation
+
+---
+
+## ✨ Features
+
+### 🏗️ Intelligent Agent Creation
+
+- **Three-Step Design Method**: Pattern Selection → State Definition → Graph Construction
+- **5 Proven Design Patterns**: Sequential, Reflection, Supervisor, Plan-Execute, Custom
+- **16+ Curated Tools**: DuckDuckGo, Tavily, Arxiv, Wikipedia, Google Scholar, PubMed, and more
+- **RAG Integration**: Automatic document processing and vector database setup
+
+### 🔬 Automated Testing & Optimization
+
+- **DeepEval Integration**: Comprehensive test generation and execution
+- **Multi-Target Optimization**:
+  - RAG parameters (chunk size, overlap, retrieval count)
+  - Tool selection and configuration
+  - Graph structure refinement
+  - Dependency optimization
+- **LLM-Powered Analysis**: Intelligent root cause analysis and automated fixes
+- **Iteration History**: Complete audit trail of all optimization cycles
+
+### 🚀 Deployment & Export
+
+- **Dify Export**: Convert agents to Dify-compatible YAML format
+- **Auto-Documentation**: Generate comprehensive README files
+- **ZIP Packaging**: Bundle agents with all dependencies
+- **Validation**: Pre-export compatibility checking
+
+### 🎨 Flexible Interfaces
+
+| Interface | Best For | Launch Command |
+|-----------|----------|----------------|
+| **CLI** | Full features & automation | `python start.py` |
+| **Web UI** | Visual management & monitoring | `python scripts/start_ui.bat` |
+| **Chat UI** | Beginners & quick tasks | `python scripts/start_chat_ui.bat` |
+| **Python API** | Programmatic integration | `from src.exporters import export_to_dify` |
+
+### 🛡️ Advanced Features (v8.0)
+
+- **Interface Guard**: Pydantic-based parameter validation with LLM auto-repair
+- **Tool Discovery Engine**: Intelligent tool indexing and search
+- **Graph as Code**: JSON intermediate layer decoupling logic from implementation
+- **Subprocess Isolation**: Safe agent execution in isolated Python environments
+- **API Dual-Track**: Separate models for building (GPT-4o) vs runtime (GPT-3.5)
+- **HITL Support**: Human-in-the-loop pause/resume/stop controls
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.8 or higher
 - Git
+- OpenAI API key (or Anthropic/Azure)
 
-### 安装
+### Installation
+
+**方式 1: 一键安装（推荐）**
 
 ```bash
-# 克隆仓库
-git clone <repository-url>
+# Clone the repository
+git clone https://github.com/yourusername/Agent_Zero.git
 cd Agent_Zero
 
-# 安装依赖
+# Windows 用户
+setup.bat
+
+# Linux/Mac 用户
+chmod +x setup.sh
+./setup.sh
+
+# 或直接运行 Python 脚本
+python setup.py
+```
+
+一键安装脚本会自动完成：
+- ✅ 检查 Python 版本
+- ✅ 升级 pip 到最新版本
+- ✅ 安装所有依赖（requirements.txt）
+- ✅ 可选安装开发依赖（requirements-dev.txt）
+- ✅ 创建并配置 .env 文件（交互式配置 API 密钥）
+- ✅ 创建必要的项目目录
+- ✅ 验证安装是否成功
+
+**方式 2: 手动安装**
+
+```bash
+# 安装核心依赖
 pip install -r requirements.txt
 
-# 配置环境变量
+# (可选) 安装开发依赖（用于测试、类型检查、文档生成）
+pip install -r requirements-dev.txt
+
+# 配置环境
 cp .env.template .env
-# 编辑 .env 文件,填入你的 API 密钥
+# 编辑 .env 文件，填入你的 API 密钥
 ```
 
-### 快速开始
+### Create Your First Agent
 
-#### 方式一：使用启动脚本（推荐）
+**Option 1: CLI (Recommended)**
 
 ```bash
-# 启动 Agent Zero 系统
 python start.py
+# Select: 1. 🏗️ Create New Agent
+# Follow the interactive prompts
 ```
 
-这将：
-- 检查系统健康状态
-- 验证 API 连接
-- 显示交互式菜单
-
-#### 方式二：直接运行生成的 Agent
+**Option 2: Chat UI (Easiest)**
 
 ```bash
-# 1. 生成一个测试 Agent
-python tests/e2e/test_phase1_hello_world.py
+python scripts/start_chat_ui.bat  # Windows
+./scripts/start_chat_ui.sh        # Linux/Mac
 
-# 2. 运行生成的 Agent
-python run_agent.py
+# In the chat interface:
+# "Create a customer service agent that can search documentation and answer questions"
 ```
 
-### 运行测试
+**Option 3: Python API**
 
-```bash
-# 运行阶段一端到端测试
-python tests/e2e/test_phase1_hello_world.py
+```python
+from src.core.agent_factory import AgentFactory
+from src.llm.builder_client import BuilderClient
+
+# Initialize
+client = BuilderClient()
+factory = AgentFactory(client)
+
+# Create agent
+result = factory.create_agent(
+    requirement="Create a research assistant that can search papers and summarize findings",
+    agent_name="ResearchAssistant"
+)
+
+print(f"Agent created at: {result.output_dir}")
 ```
 
-## 📁 项目结构
+---
+
+## 📖 Documentation
+
+### Core Concepts
+
+**Graph as Code**: Agent Zero uses a JSON-based intermediate representation that decouples business logic from implementation:
+
+```
+User Requirement → JSON Graph → Python Code → Executable Agent
+```
+
+**Design Patterns**: Choose from proven architectural patterns:
+
+- **Sequential**: Linear workflow (A → B → C)
+- **Reflection**: Self-improving loops (Generate ↔ Critique)
+- **Supervisor**: Manager-worker delegation
+- **Plan-Execute**: Planning with dynamic re-planning
+- **Custom**: Define your own topology
+
+**Optimization Loop**: Continuous improvement through testing:
+
+```
+Generate → Test → Analyze → Fix → Repeat
+```
+
+### Project Structure
 
 ```
 Agent_Zero/
-├── src/                    # 源代码
-│   ├── core/              # 核心引擎
-│   ├── schemas/           # Pydantic 数据模型
-│   ├── templates/         # Jinja2 代码模板
-│   ├── llm/               # LLM 客户端
-│   └── utils/             # 工具函数
-├── agents/                # 生成的 Agent 项目
-├── config/                # 系统配置
-├── tests/                 # 测试代码
-└── docs/                  # 文档
+├── src/
+│   ├── core/              # Core engine (18+ modules)
+│   │   ├── agent_factory.py      # Main orchestrator
+│   │   ├── graph_designer.py     # Graph structure design
+│   │   ├── compiler.py           # Code generation
+│   │   ├── runner.py             # Test execution
+│   │   ├── judge.py              # Result analysis
+│   │   ├── interface_guard.py    # Parameter validation
+│   │   └── tool_discovery.py     # Tool indexing
+│   ├── llm/               # LLM integration
+│   ├── exporters/         # Platform exporters (Dify, etc.)
+│   ├── ui/                # Streamlit UI components
+│   ├── schemas/           # Pydantic data models
+│   ├── templates/         # Jinja2 code templates
+│   ├── tools/             # Tool definitions (16+)
+│   └── utils/             # Utilities
+├── scripts/               # Installation & startup scripts
+├── agents/                # Generated agents
+├── exports/               # Export outputs
+├── start.py               # CLI entry point
+├── app.py                 # Web UI (full)
+└── app_chat.py            # Web UI (chat)
 ```
 
-## 📖 开发路线图
+### CLI Menu
 
-- [x] **阶段一 (Week 1-2)**: 内核 MVP ✅
-  - [x] JSON Schema 体系
-  - [x] Compiler 编译器
-  - [x] Env Manager 环境管家
-  - [x] API 双轨配置
-  - [x] Hello World Agent 联调
+```bash
+python start.py
+```
 
-- [x] **阶段二 (Week 3-4)**: 数据流与工具 ✅
-  - [x] **Week 3: RAG 管道**
-    - [x] PM 需求分析师
-    - [x] Profiler 数据体检
-    - [x] RAG Builder RAG策略装配
-    - [x] Graph Designer 图结构设计
-    - [x] E2E 测试验证
-  - [x] **Week 4: 工具系统**
-    - [x] 工具注册表 (5个预置工具)
-    - [x] Tool Selector
-    - [x] E2E 测试验证
+1. 🏗️ **Create New Agent** - AI-driven agent generation
+2. 📦 **View Agents** - Browse generated agents
+3. 🔄 **Re-test Agent** - Iterative optimization
+4. 🔧 **Configure API** - Set up LLM providers
+5. 🧪 **Run Tests** - Execute test suites
+6. 📖 **View Docs** - Access documentation
+7. 📤 **Export to Dify** - One-click deployment
+8. 🎨 **Launch Web UI** - Start Streamlit interface
+9. 🚪 **Exit**
 
-- [ ] **阶段三 (Week 5-7)**: 闭环与进化 (下一步)
-  - [ ] Week 5: 测试与执行
-    - [ ] Test Generator
-    - [ ] Runner
-    - [ ] Judge
-  - [ ] Week 6-7: MCP 集成与 Git 管理
+---
 
-- [ ] **阶段四 (Week 8-9)**: 产品化
+## 💡 Examples
 
-## 📝 许可证
+### Example 1: Customer Service Agent
 
-MIT License
+```bash
+python start.py
+# Select: 1. Create New Agent
 
-## 🤝 贡献
+# Input requirement:
+"Create a customer service agent that can:
+- Search our documentation using RAG
+- Answer common questions
+- Escalate complex issues to human agents"
 
-欢迎提交 Issue 和 Pull Request!
+# Agent Zero will:
+# 1. Design a Supervisor pattern graph
+# 2. Configure RAG with your documents
+# 3. Select appropriate tools (search, QA)
+# 4. Generate Python code
+# 5. Run tests and optimize
+# 6. Export to Dify
+```
+
+### Example 2: Research Assistant
+
+```python
+from src.core.agent_factory import AgentFactory
+from src.llm.builder_client import BuilderClient
+
+client = BuilderClient()
+factory = AgentFactory(client)
+
+# Create research agent
+result = factory.create_agent(
+    requirement="""
+    Create a research assistant that:
+    - Searches academic papers (Arxiv, PubMed, Google Scholar)
+    - Summarizes key findings
+    - Generates literature reviews
+    """,
+    agent_name="ResearchAssistant",
+    pattern="plan_execute"  # Use Plan-Execute pattern
+)
+
+# Agent is ready at: agents/ResearchAssistant/
+```
+
+### Example 3: Export Existing Agent
+
+```bash
+# Using Chat UI
+python scripts/start_chat_ui.bat
+
+# Commands:
+/list      # View all agents
+/export    # Export agent
+1          # Select agent number
+
+# Output: exports/ResearchAssistant_dify.zip
+```
+
+---
+
+## 🛠️ Technology Stack
+
+| Category | Technologies |
+|----------|--------------|
+| **AI Framework** | LangGraph, LangChain |
+| **LLM Providers** | OpenAI, Anthropic, Azure |
+| **Vector DB** | Chroma |
+| **Web UI** | Streamlit |
+| **Testing** | DeepEval, pytest |
+| **Validation** | Pydantic v2 |
+| **Templates** | Jinja2 |
+| **Document Processing** | Unstructured, PyMuPDF |
+
+---
+
+## 🎓 Advanced Usage
+
+### Custom Design Patterns
+
+Create your own agent patterns:
+
+```python
+from src.schemas.pattern import PatternConfig
+
+custom_pattern = PatternConfig(
+    name="custom_workflow",
+    description="My custom agent pattern",
+    states=["start", "process", "validate", "end"],
+    edges=[
+        {"from": "start", "to": "process"},
+        {"from": "process", "to": "validate"},
+        {"from": "validate", "to": "end", "condition": "is_valid"},
+        {"from": "validate", "to": "process", "condition": "needs_retry"}
+    ]
+)
+```
+
+### Multi-Agent Orchestration
+
+```python
+# Create supervisor agent
+supervisor = factory.create_agent(
+    requirement="Supervisor that coordinates research and writing agents",
+    pattern="supervisor"
+)
+
+# Create worker agents
+researcher = factory.create_agent(
+    requirement="Research papers and extract insights",
+    pattern="sequential"
+)
+
+writer = factory.create_agent(
+    requirement="Write reports based on research",
+    pattern="reflection"
+)
+```
+
+### Custom Tool Integration
+
+```python
+from src.tools.registry import ToolRegistry
+
+# Register custom tool
+@ToolRegistry.register("my_custom_tool")
+def my_tool(query: str) -> str:
+    """Custom tool implementation"""
+    return f"Processed: {query}"
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Development Setup
+
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+pytest tests/ -v
+
+# Code formatting
+black src/
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- [LangGraph](https://github.com/langchain-ai/langgraph) - Agent framework
+- [Dify](https://dify.ai) - AI application platform
+- [Streamlit](https://streamlit.io) - Web UI framework
+- [DeepEval](https://github.com/confident-ai/deepeval) - Testing framework
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/Agent_Zero/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/Agent_Zero/discussions)
+- **Documentation**: [docs/](docs/)
+
+---
+
+<div align="center">
+
+**Built with ❤️ by the Agent Zero Team**
+
+If this project helps you, please give us a ⭐️
+
+</div>

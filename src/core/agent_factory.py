@@ -32,14 +32,16 @@ from ..tools.definitions import CURATED_TOOLS
 
 class AgentFactory:
     """Agent 工厂 - 编排所有组件生成 Agent"""
-    
+
     def __init__(
         self,
         config: Optional[AgentFactoryConfig] = None,
-        callback: Optional[ProgressCallback] = None
+        callback: Optional[ProgressCallback] = None,
+        log_callback: Optional[callable] = None
     ):
         self.config = config or AgentFactoryConfig.from_env()
         self.callback = callback
+        self.log_callback = log_callback  # 🆕 Phase 5: UI 日志回调
         
         # 🆕 v8.0: Load Curated Tools into Registry
         # This ensures Interface Guard can validate tool parameters
@@ -63,6 +65,22 @@ class AgentFactory:
         
     def set_callback(self, callback: ProgressCallback):
         self.callback = callback
+
+    def _log(self, message: str, level: str = "INFO"):
+        """
+        统一日志接口 - 同时支持 CLI 和 UI
+
+        Args:
+            message: 日志消息
+            level: 日志级别 (INFO/WARNING/ERROR/SUCCESS/DEBUG)
+        """
+        # CLI 输出
+        if self.callback:
+            self.callback.on_log(message)
+
+        # UI 回调
+        if self.log_callback:
+            self.log_callback(message, level)
         
     async def create_agent(
         self,

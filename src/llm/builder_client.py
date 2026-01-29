@@ -46,12 +46,20 @@ class BuilderClient:
 
     def __init__(self, config: BuilderAPIConfig):
         """Initialize Builder API client.
-        
+
         Args:
             config: Builder API configuration
         """
         self.config = config
         self.client = self._init_client(config)
+
+        # 🆕 Phase 5: Token 统计
+        self.token_stats = {
+            "total_calls": 0,
+            "total_input_tokens": 0,
+            "total_output_tokens": 0,
+            "total_cost_usd": 0.0
+        }
 
     def _init_client(self, config: BuilderAPIConfig) -> Any:
         """Initialize LLM client based on provider.
@@ -96,11 +104,11 @@ class BuilderClient:
         self, prompt: str, schema: Optional[Type[BaseModel]] = None
     ) -> str | BaseModel:
         """Call Builder API with optional structured output.
-        
+
         Args:
             prompt: Input prompt
             schema: Optional Pydantic schema for structured output
-            
+
         Returns:
             Response string or structured output
         """
@@ -110,6 +118,8 @@ class BuilderClient:
         else:
             # Regular text output
             response = await self.client.ainvoke(prompt)
+            # 🆕 Phase 5: 统计 Token
+            self._update_token_stats(response)
             return response.content
 
     async def generate_structured(
@@ -142,6 +152,10 @@ class BuilderClient:
         try:
             structured_llm = self.client.with_structured_output(response_model)
             result = await structured_llm.ainvoke(prompt)
+            # 🆕 Phase 5: 统计 Token (尝试从 result 中提取)
+            if hasattr(result, '__dict__'):
+                # 如果 result 是对象，尝试获取原始响应
+                pass  # structured output 通常不包含 usage 信息
             return result
 
         except Exception as e:
@@ -196,6 +210,9 @@ class BuilderClient:
         response = await self.client.ainvoke(fallback_prompt)
         raw_text = response.content
 
+        # 🆕 Phase 5: 统计 Token
+        self._update_token_stats(response)
+
         # 3. 清洗和解析
         try:
             json_str = extract_json_from_text(raw_text)
@@ -214,7 +231,7 @@ class BuilderClient:
 
     async def health_check(self) -> bool:
         """Check API connectivity.
-        
+
         Returns:
             True if API is accessible, False otherwise
         """
@@ -225,6 +242,108 @@ class BuilderClient:
         except Exception as e:
             print(f"Builder API health check failed: {e}")
             return False
+
+    def _update_token_stats(self, response: Any):
+        """
+        更新 Token 统计信息
+
+        Args:
+            response: LLM 响应对象
+        """
+        # 尝试从响应中提取 usage 信息
+        usage = None
+
+        # LangChain 响应对象通常有 response_metadata
+        if hasattr(response, 'response_metadata'):
+            usage = response.response_metadata.get('token_usage')
+
+        # 或者直接有 usage 属性
+        if not usage and hasattr(response, 'usage'):
+            usage = response.usage
+
+        if usage:
+            self.token_stats["total_calls"] += 1
+
+            # 提取 token 数量
+            input_tokens = usage.get('prompt_tokens', 0)
+            output_tokens = usage.get('completion_tokens', 0)
+
+            self.token_stats["total_input_tokens"] += input_tokens
+            self.token_stats["total_output_tokens"] += output_tokens
+
+            # 计算成本
+            cost = self._calculate_cost(input_tokens, output_tokens)
+            self.token_stats["total_cost_usd"] += cost
+
+    def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
+        """
+        计算 API 调用成本
+
+        Args:
+            input_tokens: 输入 token 数量
+            output_tokens: 输出 token 数量
+
+        Returns:
+            成本（美元）
+        """
+        # 价格表（每 1000 tokens 的价格，单位：美元）
+        PRICING = {
+            # OpenAI
+            "gpt-4o": {"input": 0.0025, "output": 0.01},
+            "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
+            "gpt-4-turbo": {"input": 0.01, "output": 0.03},
+            "gpt-4": {"input": 0.03, "output": 0.06},
+            "gpt-3.5-turbo": {"input": 0.0005, "output": 0.0015},
+
+            # Anthropic
+            "claude-3-5-sonnet-20241022": {"input": 0.003, "output": 0.015},
+            "claude-3-opus-20240229": {"input": 0.015, "output": 0.075},
+            "claude-3-sonnet-20240229": {"input": 0.003, "output": 0.015},
+            "claude-3-haiku-20240307": {"input": 0.00025, "output": 0.00125},
+
+            # DeepSeek
+            "deepseek-chat": {"input": 0.0001, "output": 0.0002},
+            "deepseek-coder": {"input": 0.0001, "output": 0.0002},
+        }
+
+        # 获取当前模型的价格
+        model_name = self.config.model
+        pricing = PRICING.get(model_name)
+
+        if not pricing:
+            # 如果找不到精确匹配，尝试模糊匹配
+            for key in PRICING.keys():
+                if key in model_name or model_name in key:
+                    pricing = PRICING[key]
+                    break
+
+        if not pricing:
+            # 使用默认价格（GPT-4o）
+            pricing = PRICING["gpt-4o"]
+
+        # 计算成本
+        input_cost = (input_tokens / 1000) * pricing["input"]
+        output_cost = (output_tokens / 1000) * pricing["output"]
+
+        return input_cost + output_cost
+
+    def get_token_stats(self) -> dict:
+        """
+        获取 Token 统计信息
+
+        Returns:
+            统计信息字典
+        """
+        return self.token_stats.copy()
+
+    def reset_token_stats(self):
+        """重置 Token 统计"""
+        self.token_stats = {
+            "total_calls": 0,
+            "total_input_tokens": 0,
+            "total_output_tokens": 0,
+            "total_cost_usd": 0.0
+        }
 
     @classmethod
     def from_env(cls) -> "BuilderClient":

@@ -127,7 +127,9 @@ def show_menu():
     print("4. 🔧 配置 API 设置")
     print("5. 🧪 运行测试")
     print("6. 📖 查看文档")
-    print("7. 🚪 退出")
+    print("7. 📤 导出 Agent 到 Dify")  # 🆕 Phase 5
+    print("8. 🎨 启动 Web UI")  # 🆕 Phase 5
+    print("9. 🚪 退出")
     print()
 
 
@@ -158,7 +160,7 @@ async def main():
     # Show menu
     while True:
         show_menu()
-        choice = input("请选择 (1-7): ").strip()
+        choice = input("请选择 (1-9): ").strip()
         
         # 🔄 辅助函数: 重新加载核心模块
         def reload_core_modules():
@@ -974,10 +976,157 @@ async def main():
             print("   Agent Zero项目计划书.md - 项目计划")
             print("   Agent_Zero_详细实施计划.md - 实施细节")
         elif choice == "7":
+            # 🆕 Phase 5: 导出 Agent 到 Dify
+            print("\n📤 导出 Agent 到 Dify")
+            print("=" * 50)
+
+            agents_dir = Path("agents")
+            if agents_dir.exists():
+                agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+
+                if agents:
+                    print("\n可用的 Agent:")
+                    for i, agent in enumerate(agents, 1):
+                        print(f"   {i}. {agent.name}")
+
+                    try:
+                        idx = int(input("\n请选择 Agent 编号 (0=取消): ").strip())
+                        if 1 <= idx <= len(agents):
+                            target_agent = agents[idx - 1]
+
+                            # Load graph.json
+                            graph_file = target_agent / "graph.json"
+                            if not graph_file.exists():
+                                print(f"❌ 未找到 graph.json: {graph_file}")
+                                continue
+
+                            print(f"\n📂 Agent: {target_agent.name}")
+                            print(f"📁 路径: {target_agent}")
+
+                            # Import export modules
+                            from src.exporters import export_to_dify, validate_for_dify
+                            from src.utils.readme_generator import generate_readme
+                            from src.schemas.graph_structure import GraphStructure
+                            import json
+
+                            # Load graph
+                            with open(graph_file, 'r', encoding='utf-8') as f:
+                                graph_data = json.load(f)
+                            graph = GraphStructure.model_validate(graph_data)
+
+                            # Validate
+                            print("\n🔍 验证 Graph...")
+                            valid, warnings = validate_for_dify(graph)
+
+                            if valid:
+                                print("✅ Graph 验证通过")
+                            else:
+                                print("❌ Graph 验证失败")
+
+                            if warnings:
+                                print("\n⚠️  警告信息:")
+                                for warning in warnings:
+                                    print(f"  - {warning}")
+
+                            # Export options
+                            print("\n请选择导出选项:")
+                            print("  1. 导出 Dify YAML")
+                            print("  2. 生成 README")
+                            print("  3. 两者都导出")
+                            print("  0. 取消")
+
+                            export_choice = input("\n请选择 (0-3): ").strip()
+
+                            if export_choice in ["1", "3"]:
+                                # Export Dify YAML
+                                output_dir = Path("exports") / target_agent.name
+                                output_dir.mkdir(parents=True, exist_ok=True)
+
+                                dify_path = export_to_dify(
+                                    graph=graph,
+                                    agent_name=target_agent.name,
+                                    output_path=output_dir / f"{target_agent.name}_dify.yml"
+                                )
+
+                                print(f"\n✅ Dify YAML 已导出: {dify_path}")
+                                print(f"   文件大小: {dify_path.stat().st_size} 字节")
+
+                            if export_choice in ["2", "3"]:
+                                # Generate README
+                                output_dir = Path("exports") / target_agent.name
+                                output_dir.mkdir(parents=True, exist_ok=True)
+
+                                readme_path = generate_readme(
+                                    agent_name=target_agent.name,
+                                    graph=graph,
+                                    output_path=output_dir / "README.md"
+                                )
+
+                                print(f"\n✅ README 已生成: {readme_path}")
+                                print(f"   文件大小: {readme_path.stat().st_size} 字节")
+
+                            if export_choice in ["1", "2", "3"]:
+                                print(f"\n📁 导出目录: {output_dir}")
+                                print("\n💡 下一步:")
+                                print("   1. 访问 https://cloud.dify.ai")
+                                print("   2. 创建应用 → Chatflow")
+                                print("   3. 导入 DSL → 上传 YAML 文件")
+                                if any(node.type == "rag" for node in graph.nodes):
+                                    print("   4. 手动添加 Knowledge Retrieval 节点（RAG 节点已跳过）")
+
+                        elif idx == 0:
+                            print("已取消")
+                        else:
+                            print("无效序号")
+                    except ValueError:
+                        print("无效输入")
+                    except Exception as e:
+                        print(f"❌ 导出失败: {e}")
+                        import traceback
+                        traceback.print_exc()
+                else:
+                    print("   (空) 尚未生成任何 Agent")
+            else:
+                print("   (空) agents 目录不存在")
+
+        elif choice == "8":
+            # 🆕 Phase 5: 启动 Web UI
+            print("\n🎨 启动 Web UI")
+            print("=" * 50)
+
+            # Check if streamlit is installed
+            try:
+                import streamlit
+                print(f"✅ Streamlit 已安装 (版本: {streamlit.__version__})")
+            except ImportError:
+                print("❌ Streamlit 未安装")
+                print("\n请先安装依赖:")
+                print("   python install_dependencies.py")
+                print("   或")
+                print("   pip install streamlit plotly")
+                continue
+
+            print("\n正在启动 Streamlit UI...")
+            print("浏览器将自动打开，或手动访问: http://localhost:8501")
+            print("\n按 Ctrl+C 停止服务器")
+            print()
+
+            import subprocess
+            try:
+                # Use python -m to avoid PATH issues
+                subprocess.run([sys.executable, "-m", "streamlit", "run", "app.py"])
+            except KeyboardInterrupt:
+                print("\n\n✅ UI 已停止")
+            except Exception as e:
+                print(f"\n❌ 启动失败: {e}")
+                print("\n请尝试手动启动:")
+                print("   python -m streamlit run app.py")
+
+        elif choice == "9":
             print("\n👋 再见!")
             break
         else:
-            print("\n❌ 无效选项，请选择 1-7。")
+            print("\n❌ 无效选项，请选择 1-9。")
         
         input("\n按回车键继续...")
 
