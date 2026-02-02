@@ -16,6 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        # 确保 Git 使用 LF 换行符
+        autocrlf: false
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
