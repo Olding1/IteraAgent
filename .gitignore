@@ -93,6 +93,9 @@ docs/
 *.bak
 *.log
 
+# Internal Development Notes
+CI_FIX_SUMMARY.md
+
 # Documentation
 docs/_build/
 
