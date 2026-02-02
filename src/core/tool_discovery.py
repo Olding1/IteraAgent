@@ -10,6 +10,7 @@ from typing import List, Dict, Any, Optional
 import re
 
 from ..schemas import ToolDefinition
+from ..utils.debug_logger import debug_log
 
 
 class ToolDiscoveryEngine:
@@ -63,7 +64,7 @@ class ToolDiscoveryEngine:
             return []
         
         # 0. Debug Log
-        print(f"🔍 [ToolDiscovery] DEBUG: Searching for '{query}' (Category: {category})")
+        debug_log("ToolDiscovery", f"Searching for '{query}' (Category: {category})")
         
         # 关键词匹配评分
         query_lower = query.lower()
@@ -112,7 +113,7 @@ class ToolDiscoveryEngine:
                 
             if score > 0:
                 scores.append((tool, score))
-                print(f"   Using {tool['name']}: Score={score} Hits={debug_hits}")
+                debug_log("ToolDiscovery", f"Using {tool['name']}: Score={score} Hits={debug_hits}")
         
         # 排序并返回 top_k
         scores.sort(key=lambda x: x[1], reverse=True)

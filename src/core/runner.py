@@ -25,6 +25,7 @@ from queue import Queue
 from pydantic import BaseModel, Field
 
 from src.schemas.execution_result import ExecutionResult, ExecutionStatus
+from src.utils.debug_logger import debug_log
 
 
 class ExecutionControl(Enum):
@@ -118,9 +119,8 @@ class Runner:
         Returns:
             Python 可执行文件路径
         """
-        # 🆕 Debug: 显示 agent_dir
-        print(f"🔍 [Runner] Agent 目录: {self.agent_dir}")
-        print(f"🔍 [Runner] Agent 目录存在: {self.agent_dir.exists()}")
+        debug_log("Runner", f"Agent 目录: {self.agent_dir}")
+        debug_log("Runner", f"Agent 目录存在: {self.agent_dir.exists()}")
         
         # 检查是否有虚拟环境
         venv_paths = [
@@ -129,12 +129,11 @@ class Runner:
         ]
         
         for venv_path in venv_paths:
-            # 🆕 Debug: 显示每个检查的路径
-            print(f"🔍 [Runner] 检查路径: {venv_path}")
-            print(f"🔍 [Runner] 路径存在: {venv_path.exists()}")
+            debug_log("Runner", f"检查路径: {venv_path}")
+            debug_log("Runner", f"路径存在: {venv_path.exists()}")
             
             if venv_path.exists():
-                print(f"✅ [Runner] 找到 venv Python: {venv_path}")
+                debug_log("Runner", f"✅ 找到 venv Python: {venv_path}")
                 return venv_path
         
         # 使用系统 Python
@@ -270,8 +269,8 @@ class Runner:
         """
         try:
             # 使用 venv 中的 Python 检查
-            print(f"🔍 [Runner] 检查 Python 路径: {self.venv_python}")
-            print(f"🔍 [Runner] Python 是否存在: {self.venv_python.exists()}")
+            debug_log("Runner", f"检查 Python 路径: {self.venv_python}")
+            debug_log("Runner", f"Python 是否存在: {self.venv_python.exists()}")
             
             result = subprocess.run(
                 [str(self.venv_python), "-c", "import deepeval; print('OK')"],
@@ -281,19 +280,16 @@ class Runner:
                 timeout=60  # 🔧 增加到 60 秒 (首次导入 deepeval 可能需要下载模型)
             )
             
-            # 🆕 Debug logging
-            print(f"🔍 [Runner] DeepEval 检查:")
-            print(f"   - 返回码: {result.returncode}")
-            print(f"   - Stdout: {result.stdout.strip()}")
+            debug_log("Runner", "DeepEval 检查:", returncode=result.returncode, stdout=result.stdout.strip())
             if result.stderr:
-                print(f"   - Stderr: {result.stderr.strip()}")
+                debug_log("Runner", f"Stderr: {result.stderr.strip()}")
             
             return result.returncode == 0 and "OK" in result.stdout
         except subprocess.TimeoutExpired:
-            print(f"🔍 [Runner] DeepEval 检查超时 (60秒)")
+            debug_log("Runner", "DeepEval 检查超时 (60秒)")
             return False
         except Exception as e:
-            print(f"🔍 [Runner] DeepEval 检查失败: {e}")
+            debug_log("Runner", f"DeepEval 检查失败: {e}")
             return False
     
     def _run_pytest(self, test_file: str, timeout: int) -> ExecutionResult:
@@ -320,10 +316,9 @@ class Runner:
             "-v", "-s"
         ]
         
-        # 🆕 Debug logging
-        print(f"🔍 [Runner] 执行命令: {' '.join(cmd)}")
-        print(f"🔍 [Runner] 工作目录: {self.agent_dir}")
-        print(f"🔍 [Runner] Python: {self.venv_python}")
+        debug_log("Runner", f"执行命令: {' '.join(cmd)}")
+        debug_log("Runner", f"工作目录: {self.agent_dir}")
+        debug_log("Runner", f"Python: {self.venv_python}")
         
         # 运行命令
         result = subprocess.run(
@@ -336,42 +331,41 @@ class Runner:
         
         execution_time = time.time() - start_time
         
-        # 🆕 Debug logging
-        print(f"🔍 [Runner] 返回码: {result.returncode}")
-        print(f"🔍 [Runner] 执行时间: {execution_time:.2f}s")
-        print(f"🔍 [Runner] Stderr: {result.stderr[:300] if result.stderr else 'None'}")
+        debug_log("Runner", f"返回码: {result.returncode}")
+        debug_log("Runner", f"执行时间: {execution_time:.2f}s")
+        debug_log("Runner", f"Stderr: {result.stderr[:300] if result.stderr else 'None'}")
         
         # 解析 JSON 报告
         if report_file.exists():
-            print(f"🔍 [Runner] ✅ 报告文件存在: {report_file}")
-            print(f"🔍 [Runner] 报告文件大小: {report_file.stat().st_size} bytes")
+            debug_log("Runner", f"✅ 报告文件存在: {report_file}")
+            debug_log("Runner", f"报告文件大小: {report_file.stat().st_size} bytes")
             
             try:
                 with open(report_file, 'r', encoding='utf-8') as f:
                     report_data = json.load(f)
                 
-                print(f"🔍 [Runner] JSON 解析成功")
-                print(f"🔍 [Runner] 报告键: {list(report_data.keys())}")
+                debug_log("Runner", "JSON 解析成功")
+                debug_log("Runner", f"报告键: {list(report_data.keys())}")
                 
                 # 显示 summary 信息
                 if 'summary' in report_data:
-                    print(f"🔍 [Runner] Summary: {report_data['summary']}")
+                    debug_log("Runner", f"Summary: {report_data['summary']}")
                 
                 # 显示测试数量
                 if 'tests' in report_data:
-                    print(f"🔍 [Runner] 测试数量: {len(report_data['tests'])}")
+                    debug_log("Runner", f"测试数量: {len(report_data['tests'])}")
                     if report_data['tests']:
-                        print(f"🔍 [Runner] 第一个测试: {report_data['tests'][0].get('nodeid', 'unknown')}")
+                        debug_log("Runner", f"第一个测试: {report_data['tests'][0].get('nodeid', 'unknown')}")
                 
                 test_result = self._parse_json_report(report_file)
                 
-                print(f"🔍 [Runner] 解析结果类型: {type(test_result)}")
-                print(f"🔍 [Runner] 解析成功 - Status: {test_result.overall_status}, Tests: {len(test_result.test_results)}")
+                debug_log("Runner", f"解析结果类型: {type(test_result)}")
+                debug_log("Runner", f"解析成功 - Status: {test_result.overall_status}, Tests: {len(test_result.test_results)}")
                 
                 return test_result
                 
             except Exception as e:
-                print(f"🔍 [Runner] ❌ JSON解析失败: {e}")
+                debug_log("Runner", f"❌ JSON解析失败: {e}")
                 import traceback
                 traceback.print_exc()
                 # JSON 解析失败,回退到 stdout 解析
@@ -400,12 +394,12 @@ class Runner:
         with open(report_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        print(f"🔍 [_parse_json_report] 开始解析 JSON 报告")
-        print(f"🔍 [_parse_json_report] 报告键: {list(data.keys())}")
+        debug_log("_parse_json_report", "开始解析 JSON 报告")
+        debug_log("_parse_json_report", f"报告键: {list(data.keys())}")
         
         # 提取汇总信息
         summary = data.get('summary', {})
-        print(f"🔍 [_parse_json_report] Summary 内容: {summary}")
+        debug_log("_parse_json_report", f"Summary 内容: {summary}")
         
         total = summary.get('total', 0)
         passed = summary.get('passed', 0)
@@ -414,8 +408,8 @@ class Runner:
         duration = data.get('duration', 0.0)
         tests = data.get('tests', [])
         
-        print(f"🔍 [_parse_json_report] 统计: Total={total}, Passed={passed}, Failed={failed}, Skipped={skipped}, Duration={duration:.2f}s")
-        print(f"🔍 [_parse_json_report] 发现 {len(tests)} 个测试详情")
+        debug_log("_parse_json_report", f"统计: Total={total}, Passed={passed}, Failed={failed}, Skipped={skipped}, Duration={duration:.2f}s")
+        debug_log("_parse_json_report", f"发现 {len(tests)} 个测试详情")
         
         # 创建 TestResult 列表
         from ..schemas.execution_result import TestResult, ExecutionStatus
@@ -454,7 +448,7 @@ class Runner:
         else:
             overall_status = ExecutionStatus.FAILED
         
-        print(f"🔍 [_parse_json_report] 创建 ExecutionResult: status={overall_status}, total={total}")
+        debug_log("_parse_json_report", f"创建 ExecutionResult: status={overall_status}, total={total}")
         
         from ..schemas.execution_result import ExecutionResult
         return ExecutionResult(

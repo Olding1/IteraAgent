@@ -7,15 +7,20 @@ from ..core.agent_factory import AgentFactory
 from ..core.progress_callback import ProgressCallback
 from ..schemas.graph_structure import GraphStructure
 from ..schemas.simulation import SimulationResult
+from ..utils.i18n import t
 
 class CLIProgressCallback(ProgressCallback):
     """CLI 进度回调实现"""
     
     def on_step_start(self, step_name: str, step_num: int, total_steps: int):
-        print(f"\n🚀 [步骤 {step_num}/{total_steps}] {step_name}...")
+        # Translate step name if it's a key
+        step_display = t(f'step_{step_name.lower().replace(" ", "_")}') if step_name in ['PM Agent', 'Resource Config', 'Design & Simulation', 'Build & Evolve'] else step_name
+        print(f"\n🚀 [{t('step_complete')} {step_num}/{total_steps}] {step_display}...")
         
     def on_step_complete(self, step_name: str, result: any):
-        print(f"✅ {step_name} 完成。")
+        step_display = t(f'step_{step_name.lower().replace(" ", "_")}') if step_name in ['PM Agent', 'Resource Config', 'Design & Simulation', 'Build & Evolve'] else step_name
+        complete_text = t('step_complete') if t('step_complete') != 'step_complete' else '完成' if 'zh' in str(t('banner')) else 'Complete'
+        print(f"✅ {step_display} {complete_text}。")
         
         # 打印详细信息
         if hasattr(result, 'project_meta'): # AgentResult
@@ -50,20 +55,20 @@ class CLIProgressCallback(ProgressCallback):
         蓝图评审
         Retruns: (approved, feedback)
         """
-        print("\n👀 蓝图评审")
+        print(f"\n{t('blueprint_review')}")
         print("="*30)
-        print(f"模式: {graph.pattern.pattern_type}")
-        print(f"节点数: {len(graph.nodes)} | 边数: {len(graph.edges)}")
-        print("\n仿真结果:")
-        print(f"成功: {simulation_result.success}")
-        print(f"问题数: {len(simulation_result.issues)}")
+        print(f"{t('pattern')}: {graph.pattern.pattern_type}")
+        print(f"{t('nodes')}: {len(graph.nodes)} | {t('edges')}: {len(graph.edges)}")
+        print(f"\n{t('simulation_result')}:")
+        print(f"{t('success')}: {simulation_result.success}")
+        print(f"{t('issues')}: {len(simulation_result.issues)}")
         for issue in simulation_result.issues:
             print(f"  - [{issue.severity}] {issue.issue_type}: {issue.description}")
 
-        print("\n命令:")
-        print("  [y] 批准并构建")
-        print("  [n] 拒绝 (退出)")
-        print("  [text] 提供反馈以优化设计 (例如: '添加一个审核节点')")
+        print(f"\n{t('commands')}:")
+        print(f"  {t('approve_build')}")
+        print(f"  {t('reject')}")
+        print(f"  {t('provide_feedback')}")
         
         while True:
             choice = input("\n> ").strip()
@@ -78,9 +83,9 @@ class CLIProgressCallback(ProgressCallback):
                 return False, choice
 
     def on_install_request(self) -> bool:
-        print("\n📦 是否立即安装依赖并运行测试? (耗时较长)")
-        print("   [y] 是, 安装并运行 (推荐)")
-        print("   [n] 否, 仅生成代码")
+        print(f"\n{t('install_prompt')}")
+        print(f"   {t('install_yes')}")
+        print(f"   {t('install_no')}")
         while True:
             choice = input("> ").strip().lower()
             if choice == 'y': return True
@@ -101,19 +106,19 @@ class CLIProgressCallback(ProgressCallback):
 
 async def run_interactive_factory():
     """Run the Agent Factory in interactive mode."""
-    print("\n🏭 Agent 工厂 - 交互模式")
+    print(f"\n{t('factory_title')}")
     print("===================================\n")
     
-    description = input("请输入您想构建的 Agent 描述:\n> ")
+    description = input(f"{t('factory_describe')}:\n> ")
     if not description.strip():
-        print("描述为空，正在退出。")
+        print(t('factory_empty'))
         return
         
     callback = CLIProgressCallback()
     factory = AgentFactory(callback=callback)
     
     # Optional: Ask for file paths
-    files_input = input("\n是否有参考文件/文档? (逗号分隔路径，或留空):\n> ")
+    files_input = input(f"\n{t('factory_files')}:\n> ")
     file_paths = []
     if files_input.strip():
         import shlex

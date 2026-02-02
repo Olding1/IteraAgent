@@ -2,6 +2,7 @@
 
 import asyncio
 import sys
+import argparse
 from pathlib import Path
 import os
 from dotenv import load_dotenv
@@ -16,20 +17,36 @@ from src.llm import (
     check_all_apis,
     HealthStatus,
 )
+from src.utils.debug_logger import set_debug_mode
+from src.utils.i18n import t, set_language, get_language
+
+
+def select_language(args) -> str:
+    """Select language at startup."""
+    if args.lang:
+        return args.lang
+    
+    print("=" * 50)
+    print("Select Language / 选择语言")
+    print("=" * 50)
+    print("1. 中文 (Chinese)")
+    print("2. English")
+    choice = input("\nPlease select / 请选择 (1/2): ").strip()
+    return 'zh' if choice == '1' else 'en'
 
 
 def print_banner():
     """Print Agent Zero banner."""
     print("=" * 70)
-    print("🚀 Agent Zero v8.0 - 智能 Agent 构建工厂")
-    print("   🆕 Interface Guard | 🔍 Tool Discovery | 📚 16+ Tools")
+    print(t('banner'))
+    print(f"   {t('banner_subtitle')}")
     print("=" * 70)
     print()
 
 
 async def check_system_health():
     """Check system health before starting."""
-    print("📊 系统健康检查")
+    print(t('health_check'))
     print("-" * 70)
     
     # Load environment variables
@@ -56,18 +73,18 @@ async def check_system_health():
         temperature=float(os.getenv("RUNTIME_TEMPERATURE", "0.7")),
     )
     
-    print("\n🔍 正在检查 Builder API...")
-    print(f"   提供商: {builder_config.provider}")
-    print(f"   模型: {builder_config.model}")
-    print(f"   API Key: {'✓ 已配置' if builder_config.api_key else '✗ 缺失'}")
+    print(f"\n{t('checking_builder_api')}")
+    print(f"   {t('provider')}: {builder_config.provider}")
+    print(f"   {t('model')}: {builder_config.model}")
+    print(f"   {t('api_key')}: {t('api_key_configured') if builder_config.api_key else t('api_key_missing')}")
     
-    print("\n🔍 正在检查 Runtime API...")
-    print(f"   提供商: {runtime_config.provider}")
-    print(f"   模型: {runtime_config.model}")
-    print(f"   API Key: {'✓ 已配置' if runtime_config.api_key else '✗ 缺失'}")
+    print(f"\n{t('checking_runtime_api')}")
+    print(f"   {t('provider')}: {runtime_config.provider}")
+    print(f"   {t('model')}: {runtime_config.model}")
+    print(f"   {t('api_key')}: {t('api_key_configured') if runtime_config.api_key else t('api_key_missing')}")
     
     # Perform health checks
-    print("\n⏳ 正在测试连接性...")
+    print(f"\n{t('testing_connectivity')}")
     try:
         builder_result, runtime_result = await check_all_apis(
             builder_config, runtime_config
@@ -76,12 +93,12 @@ async def check_system_health():
         print(f"\n   Builder API: {_get_status_emoji(builder_result.status)} {builder_result.status.value.upper()}")
         print(f"   {builder_result.message}")
         if builder_result.response_time_ms:
-            print(f"   响应时间: {builder_result.response_time_ms}ms")
+            print(f"   {t('response_time')}: {builder_result.response_time_ms}ms")
         
         print(f"\n   Runtime API: {_get_status_emoji(runtime_result.status)} {runtime_result.status.value.upper()}")
         print(f"   {runtime_result.message}")
         if runtime_result.response_time_ms:
-            print(f"   响应时间: {runtime_result.response_time_ms}ms")
+            print(f"   {t('response_time')}: {runtime_result.response_time_ms}ms")
         
         # Check if both are healthy
         both_healthy = (
@@ -91,18 +108,18 @@ async def check_system_health():
         
         print("\n" + "-" * 70)
         if both_healthy:
-            print("✅ 所有系统运行正常！")
+            print(t('all_systems_ok'))
         else:
-            print("⚠️  部分系统运行异常")
-            print("\n请检查:")
-            print("1. .env 文件中是否配置了正确 API Key")
-            print("2. 网络连接状态")
-            print("3. API 服务状态")
+            print(t('partial_systems_down'))
+            print(f"\n{t('check_suggestions')}")
+            print(t('check_env_file'))
+            print(t('check_network'))
+            print(t('check_api_status'))
         
         return both_healthy
         
     except Exception as e:
-        print(f"\n❌ 健康检查失败: {e}")
+        print(f"\n{t('health_check_failed')}: {e}")
         return False
 
 
@@ -119,17 +136,17 @@ def _get_status_emoji(status: HealthStatus) -> str:
 def show_menu():
     """Show main menu."""
     print("\n" + "=" * 70)
-    print("📋 主菜单")
+    print(t('main_menu'))
     print("=" * 70)
-    print("\n1. 🏗️  新建 Agent")
-    print("2. 📦 查看已生成 Agent")
-    print("3. 🔄 重新测试现有 Agent (迭代优化)")  # 🆕 Phase 6
-    print("4. 🔧 配置 API 设置")
-    print("5. 🧪 运行测试")
-    print("6. 📖 查看文档")
-    print("7. 📤 导出 Agent 到 Dify")  # 🆕 Phase 5
-    print("8. 🎨 启动 Web UI")  # 🆕 Phase 5
-    print("9. 🚪 退出")
+    print(f"\n1. {t('menu_create')}")
+    print(f"2. {t('menu_view')}")
+    print(f"3. {t('menu_retest')}")
+    print(f"4. {t('menu_config')}")
+    print(f"5. {t('menu_tests')}")
+    print(f"6. {t('menu_docs')}")
+    print(f"7. {t('menu_export')}")
+    print(f"8. {t('menu_webui')}")
+    print(f"9. {t('menu_exit')}")
     print()
 
 
@@ -150,17 +167,17 @@ async def main():
     is_healthy = await check_system_health()
     
     if not is_healthy:
-        print("\n⚠️  系统健康检查未通过。您可以继续，但")
-        print("   部分功能可能无法正常工作。")
-        response = input("\n仍要继续吗? (y/n): ")
+        print(f"\n{t('partial_systems_down')}")
+        print("   " + ("部分功能可能无法正常工作。" if get_language() == 'zh' else "Some features may not work properly."))
+        response = input(f"\n{t('continue_anyway')}: ")
         if response.lower() != 'y':
-            print("\n正在退出...")
+            print(f"\n{t('exiting')}")
             return
     
     # Show menu
     while True:
         show_menu()
-        choice = input("请选择 (1-9): ").strip()
+        choice = input(f"{t('select_option')}: ").strip()
         
         # 🔄 辅助函数: 重新加载核心模块
         def reload_core_modules():
@@ -1123,19 +1140,47 @@ async def main():
                 print("   python -m streamlit run app.py")
 
         elif choice == "9":
-            print("\n👋 再见!")
+            print(f"\n{t('goodbye')}")
             break
         else:
-            print("\n❌ 无效选项，请选择 1-9。")
+            print(f"\n{t('invalid_option')}")
         
-        input("\n按回车键继续...")
+        input(f"\n{t('press_enter')}")
 
 
 if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Agent Zero v8.0 - Intelligent Agent Factory",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Enable debug logging (shows detailed execution traces)'
+    )
+    parser.add_argument(
+        '--lang',
+        choices=['zh', 'en'],
+        help='Set language: zh (Chinese) or en (English)'
+    )
+    
+    args = parser.parse_args()
+    
+    # Set debug mode globally
+    set_debug_mode(args.debug)
+    
+    # Select language
+    selected_lang = select_language(args)
+    
+    # Store language globally (will be used by i18n module)
+    os.environ['AGENT_ZERO_LANG'] = selected_lang
+    set_language(selected_lang)
+    
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n\n👋 Interrupted by user. Goodbye!")
+        print(f"\n\n{t('interrupted')}")
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n{t('error')}: {e}")
         sys.exit(1)
