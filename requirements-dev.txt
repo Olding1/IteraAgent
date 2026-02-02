@@ -30,4 +30,5 @@ mkdocs-material>=9.5.0
 # 代码分析
 # ============================================================
 # black 和 ruff 已在 requirements.txt 中
+flake8>=7.0.0
 pylint>=3.0.0
