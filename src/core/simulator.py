@@ -716,13 +716,15 @@ Rules:
         if cond_edge.condition_logic:
             try:
                 # Wrap condition logic in a function to return value
+                # 修复: 先格式化缩进代码，避免 f-string 中使用反斜杠
+                indented_logic = '\n'.join('    ' + line for line in cond_edge.condition_logic.split('\n'))
                 wrapped_code = f"""
 def check_condition(state):
     # Safe globals
     import json
     
     # User logic
-{'\n'.join('    ' + line for line in cond_edge.condition_logic.split('\n'))}
+{indented_logic}
 """
                 # Create execution environment
                 exec_globals = {}
