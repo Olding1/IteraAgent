@@ -14,51 +14,27 @@ class NodeMapper:
 
     # 工具名称映射表
     TOOL_MAPPING = {
-        "tavily_search": {
-            "provider_id": "tavily",
-            "tool_name": "tavily_search",
-            "supported": True
-        },
+        "tavily_search": {"provider_id": "tavily", "tool_name": "tavily_search", "supported": True},
         "duckduckgo_search": {
             "provider_id": "duckduckgo",
             "tool_name": "duckduckgo_search",
-            "supported": True
+            "supported": True,
         },
         "wikipedia": {
             "provider_id": "wikipedia",
             "tool_name": "wikipedia_search",
-            "supported": True
+            "supported": True,
         },
-        "google_search": {
-            "provider_id": "google",
-            "tool_name": "google_search",
-            "supported": True
-        },
-        "bing_search": {
-            "provider_id": "bing",
-            "tool_name": "bing_search",
-            "supported": True
-        },
-        "arxiv": {
-            "provider_id": "arxiv",
-            "tool_name": "arxiv_search",
-            "supported": True
-        },
-        "pubmed": {
-            "provider_id": "pubmed",
-            "tool_name": "pubmed_search",
-            "supported": True
-        },
+        "google_search": {"provider_id": "google", "tool_name": "google_search", "supported": True},
+        "bing_search": {"provider_id": "bing", "tool_name": "bing_search", "supported": True},
+        "arxiv": {"provider_id": "arxiv", "tool_name": "arxiv_search", "supported": True},
+        "pubmed": {"provider_id": "pubmed", "tool_name": "pubmed_search", "supported": True},
         "wolfram_alpha": {
             "provider_id": "wolframalpha",
             "tool_name": "wolfram_alpha",
-            "supported": True
+            "supported": True,
         },
-        "youtube": {
-            "provider_id": "youtube",
-            "tool_name": "youtube_search",
-            "supported": True
-        },
+        "youtube": {"provider_id": "youtube", "tool_name": "youtube_search", "supported": True},
         # 其他工具标记为不支持
     }
 
@@ -81,18 +57,15 @@ class NodeMapper:
                 title=node.id,
                 type="llm",
                 desc=node.role_description or "",
-                model={
-                    "provider": "openai",
-                    "name": "gpt-4o"  # 默认模型
-                },
+                model={"provider": "openai", "name": "gpt-4o"},  # 默认模型
                 prompt_template=[
                     {
                         "role": "system",
-                        "text": node.role_description or "You are a helpful assistant."
+                        "text": node.role_description or "You are a helpful assistant.",
                     }
-                ]
+                ],
             ),
-            position=position
+            position=position,
         )
 
     @staticmethod
@@ -118,16 +91,11 @@ class NodeMapper:
                 type="code",
                 desc="⚠️ RAG 节点需要在 Dify 中手动配置知识库。请删除此节点并添加 Knowledge Retrieval 节点。",
                 code="# ⚠️ 此节点需要手动配置\n# 步骤:\n# 1. 删除此 Code 节点\n# 2. 添加 Knowledge Retrieval 节点\n# 3. 绑定知识库\n# 4. 连接到下一个节点\nresult = 'Please configure knowledge base'",
-                outputs={
-                    "result": {
-                        "type": "string",
-                        "children": None
-                    }
-                }
+                outputs={"result": {"type": "string", "children": None}},
             ),
             position=position,
             width=300,
-            height=120
+            height=120,
         )
 
     @staticmethod
@@ -157,9 +125,9 @@ class NodeMapper:
                     type="tool",
                     provider_id=mapping["provider_id"],
                     tool_name=mapping["tool_name"],
-                    tool_parameters={}
+                    tool_parameters={},
                 ),
-                position=position
+                position=position,
             )
         else:
             # 不支持的工具 - 转为 Code 节点提示
@@ -170,16 +138,11 @@ class NodeMapper:
                     type="code",
                     desc=f"Agent Zero 使用了 {tool_name}，但 Dify 不支持。请手动替换为等效工具。",
                     code=f"# TODO: 替换为 Dify 支持的工具\n# 原工具: {tool_name}\nresult = 'Not implemented'",
-                    outputs={
-                        "result": {
-                            "type": "string",
-                            "children": None
-                        }
-                    }
+                    outputs={"result": {"type": "string", "children": None}},
                 ),
                 position=position,
                 width=300,
-                height=120
+                height=120,
             )
 
     @staticmethod
@@ -201,9 +164,9 @@ class NodeMapper:
                 title=f"Condition: {node.id}",
                 type="if-else",
                 desc="条件路由节点",
-                conditions=[]  # 将在转换器中填充
+                conditions=[],  # 将在转换器中填充
             ),
-            position=position
+            position=position,
         )
 
     @staticmethod
@@ -226,12 +189,7 @@ class NodeMapper:
                 type="code",
                 desc=f"自定义节点类型: {node.type}",
                 code=f"# 自定义节点: {node.id}\n# 类型: {node.type}\nresult = 'Custom node'",
-                outputs={
-                    "result": {
-                        "type": "string",
-                        "children": None
-                    }
-                }
+                outputs={"result": {"type": "string", "children": None}},
             ),
-            position=position
+            position=position,
         )

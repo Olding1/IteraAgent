@@ -19,7 +19,7 @@ class ReadmeGenerator:
         graph: GraphStructure,
         output_path: Path,
         test_results: Optional[Dict] = None,
-        rag_config: Optional[Dict] = None
+        rag_config: Optional[Dict] = None,
     ) -> Path:
         """
         生成 README.md
@@ -37,7 +37,7 @@ class ReadmeGenerator:
         # 加载模板
         template_path = Path(__file__).parent.parent / "templates" / "readme_template.md.j2"
 
-        with open(template_path, 'r', encoding='utf-8') as f:
+        with open(template_path, "r", encoding="utf-8") as f:
             template = Template(f.read())
 
         # 生成 Mermaid 图
@@ -63,14 +63,14 @@ class ReadmeGenerator:
             avg_response_time=avg_response_time,
             has_rag=has_rag,
             rag_config=rag_config or {},
-            tools=tools
+            tools=tools,
         )
 
         # 写入文件
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(readme_content)
 
         return output_path
@@ -94,7 +94,7 @@ class ReadmeGenerator:
             "tool": "🔧",
             "rag": "📚",
             "conditional": "🔀",
-            "custom": "📦"
+            "custom": "📦",
         }
 
         # 添加节点
@@ -104,11 +104,11 @@ class ReadmeGenerator:
 
             # 根据类型选择形状
             if node.type == "conditional":
-                lines.append(f'    {node.id}{{{node_label}}}')
+                lines.append(f"    {node.id}{{{node_label}}}")
             elif node.type == "llm":
-                lines.append(f'    {node.id}([{node_label}])')
+                lines.append(f"    {node.id}([{node_label}])")
             else:
-                lines.append(f'    {node.id}[{node_label}]')
+                lines.append(f"    {node.id}[{node_label}]")
 
         # 添加普通边
         for edge in graph.edges:
@@ -120,11 +120,11 @@ class ReadmeGenerator:
                 if target == "END":
                     # 创建 END 节点
                     if "END" not in [node.id for node in graph.nodes]:
-                        lines.insert(1, '    END([🏁 END])')
+                        lines.insert(1, "    END([🏁 END])")
                     label = "结束" if key == "end" else key
-                    lines.append(f'    {cond_edge.source} -->|{label}| END')
+                    lines.append(f"    {cond_edge.source} -->|{label}| END")
                 else:
-                    lines.append(f'    {cond_edge.source} -->|{key}| {target}')
+                    lines.append(f"    {cond_edge.source} -->|{key}| {target}")
 
         return "\n".join(lines)
 
@@ -135,7 +135,7 @@ def generate_readme(
     graph: GraphStructure,
     output_path: Path,
     test_results: Optional[Dict] = None,
-    rag_config: Optional[Dict] = None
+    rag_config: Optional[Dict] = None,
 ) -> Path:
     """
     生成 README.md
@@ -155,5 +155,5 @@ def generate_readme(
         graph=graph,
         output_path=output_path,
         test_results=test_results,
-        rag_config=rag_config
+        rag_config=rag_config,
     )

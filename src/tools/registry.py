@@ -7,36 +7,34 @@ from langchain_core.tools import BaseTool
 
 class ToolMetadata(BaseModel):
     """Metadata for a registered tool."""
-    
+
     name: str = Field(..., description="Tool name")
     description: str = Field(..., description="Tool description")
     category: str = Field(default="general", description="Tool category")
     tags: List[str] = Field(default_factory=list, description="Tool tags for search")
     requires_api_key: bool = Field(default=False, description="Whether tool requires API key")
-    
+
     # 🆕 v7.5: Schema support
     openapi_schema: Optional[Dict[str, Any]] = Field(
         default=None, description="OpenAPI 3.0 Schema for tool parameters"
     )
-    examples: List[Dict[str, Any]] = Field(
-        default_factory=list, description="Usage examples"
-    )
+    examples: List[Dict[str, Any]] = Field(default_factory=list, description="Usage examples")
 
 
 class ToolRegistry:
     """Registry for managing and discovering tools.
-    
+
     The ToolRegistry provides:
     1. Tool registration and storage
     2. Tool discovery via semantic search
     3. Tool metadata management
     """
-    
+
     def __init__(self):
         """Initialize the tool registry."""
         self._tools: Dict[str, BaseTool] = {}
         self._metadata: Dict[str, ToolMetadata] = {}
-    
+
     def register(
         self,
         tool: BaseTool,
@@ -45,7 +43,7 @@ class ToolRegistry:
         requires_api_key: bool = False,
     ) -> None:
         """Register a tool in the registry.
-        
+
         Args:
             tool: LangChain BaseTool instance
             category: Tool category (e.g., 'search', 'math', 'file')
@@ -59,16 +57,16 @@ class ToolRegistry:
             tags=tags or [],
             requires_api_key=requires_api_key,
         )
-        
+
         self._tools[tool.name] = tool
         self._metadata[tool.name] = metadata
-    
+
     def register_definition(self, tool_def: Dict[str, Any]) -> None:
         """Register a tool directly from its definition dictionary.
-        
+
         This allows registering tool metadata without instantiating the tool class.
         Useful for Interface Guard validation using static definitions.
-        
+
         Args:
             tool_def: Tool definition dictionary (from CURATED_TOOLS)
         """
@@ -79,120 +77,112 @@ class ToolRegistry:
             category=tool_def["category"],
             tags=tool_def.get("tags", []),
             requires_api_key=tool_def.get("requires_api_key", False),
-            openapi_schema=tool_def.get("args_schema"), # JSON Schema style
-            examples=tool_def.get("examples", [])
+            openapi_schema=tool_def.get("args_schema"),  # JSON Schema style
+            examples=tool_def.get("examples", []),
         )
-        
+
         # Store metadata
         # Note: We don't have the BaseTool instance yet, self._tools will be empty for this key
         # This is fine for GraphDesigner validation which only checks metadata
         self._metadata[tool_def["id"]] = metadata
-    
+
     def get_tool(self, name: str) -> Optional[BaseTool]:
         """Get a tool by name.
-        
+
         Args:
             name: Tool name
-            
+
         Returns:
             BaseTool instance or None if not found
         """
         return self._tools.get(name)
-    
+
     def get_metadata(self, name: str) -> Optional[ToolMetadata]:
         """Get tool metadata by name.
-        
+
         Args:
             name: Tool name
-            
+
         Returns:
             ToolMetadata or None if not found
         """
         return self._metadata.get(name)
-    
+
     def list_tools(self, category: Optional[str] = None) -> List[str]:
         """List all registered tool names, optionally filtered by category.
-        
+
         Args:
             category: Optional category filter
-            
+
         Returns:
             List of tool names
         """
         if category is None:
             return list(self._tools.keys())
-        
-        return [
-            name for name, meta in self._metadata.items()
-            if meta.category == category
-        ]
-    
-    def search(
-        self,
-        query: str,
-        top_k: int = 5,
-        category: Optional[str] = None
-    ) -> List[str]:
+
+        return [name for name, meta in self._metadata.items() if meta.category == category]
+
+    def search(self, query: str, top_k: int = 5, category: Optional[str] = None) -> List[str]:
         """Search for tools using semantic matching.
-        
+
         Args:
             query: Search query
             top_k: Number of results to return
             category: Optional category filter
-            
+
         Returns:
             List of matching tool names, ranked by relevance
         """
         # Simple keyword-based search (can be enhanced with embeddings)
         query_lower = query.lower()
         query_words = set(query_lower.split())
-        
+
         # Score each tool
         scores: List[tuple[str, float]] = []
-        
+
         for name, metadata in self._metadata.items():
             # Skip if category filter doesn't match
             if category and metadata.category != category:
                 continue
-            
+
             score = 0.0
-            
+
             # Exact name match
             if query_lower == name.lower():
                 score += 10.0
-            
+
             # Name contains query
             if query_lower in name.lower():
                 score += 5.0
-            
+
             # Description match
             desc_lower = metadata.description.lower()
             desc_words = set(desc_lower.split())
-            
+
             # Count matching words
             matching_words = query_words & desc_words
             score += len(matching_words) * 2.0
-            
+
             # Tag match
             for tag in metadata.tags:
                 if query_lower in tag.lower():
                     score += 3.0
-            
+
             if score > 0:
                 scores.append((name, score))
-        
+
         # Sort by score descending
         scores.sort(key=lambda x: x[1], reverse=True)
-        
+
         # Return top_k results
         return [name for name, _ in scores[:top_k]]
-    
+
     def get_tools_by_names(self, names: List[str]) -> List[BaseTool]:
         """Get multiple tools by their names.
-        
+
         Args:
             names: List of tool names
-            
+
         Returns:
             List of BaseTool instances (skips missing tools)
         """
@@ -202,12 +192,12 @@ class ToolRegistry:
             if tool:
                 tools.append(tool)
         return tools
-    
+
     @property
     def tool_count(self) -> int:
         """Get total number of registered tools."""
         return len(self._tools)
-    
+
     def get_categories(self) -> List[str]:
         """Get list of all categories."""
         categories = set(meta.category for meta in self._metadata.values())
@@ -220,7 +210,7 @@ _global_registry: Optional[ToolRegistry] = None
 
 def get_global_registry() -> ToolRegistry:
     """Get the global tool registry instance.
-    
+
     Returns:
         Global ToolRegistry instance
     """
@@ -237,7 +227,7 @@ def register_tool(
     requires_api_key: bool = False,
 ) -> None:
     """Register a tool in the global registry.
-    
+
     Args:
         tool: LangChain BaseTool instance
         category: Tool category

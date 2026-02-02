@@ -24,7 +24,7 @@ class ExecutionControlPanel:
         """
         # 从 session_state 获取 runner
         if runner is None:
-            runner = st.session_state.get('runner')
+            runner = st.session_state.get("runner")
 
         if not runner:
             st.warning("⚠️ 没有正在运行的任务")
@@ -34,18 +34,12 @@ class ExecutionControlPanel:
 
         # 显示当前状态
         status = runner.get_status()
-        status_emoji = {
-            "running": "▶️",
-            "paused": "⏸️",
-            "stopped": "⏹️"
-        }
-        status_color = {
-            "running": "🟢",
-            "paused": "🟡",
-            "stopped": "🔴"
-        }
+        status_emoji = {"running": "▶️", "paused": "⏸️", "stopped": "⏹️"}
+        status_color = {"running": "🟢", "paused": "🟡", "stopped": "🔴"}
 
-        st.markdown(f"**当前状态:** {status_color.get(status, '⚪')} {status_emoji.get(status, '❓')} {status.upper()}")
+        st.markdown(
+            f"**当前状态:** {status_color.get(status, '⚪')} {status_emoji.get(status, '❓')} {status.upper()}"
+        )
 
         # 控制按钮
         col1, col2, col3 = st.columns(3)
@@ -63,7 +57,9 @@ class ExecutionControlPanel:
                 st.rerun()
 
         with col3:
-            if st.button("⏹️ 停止", disabled=(status == "stopped"), type="secondary", use_container_width=True):
+            if st.button(
+                "⏹️ 停止", disabled=(status == "stopped"), type="secondary", use_container_width=True
+            ):
                 runner.stop()
                 st.error("已停止")
                 st.rerun()
@@ -79,7 +75,7 @@ class ExecutionControlPanel:
         """
         # 从 session_state 获取 runner
         if runner is None:
-            runner = st.session_state.get('runner')
+            runner = st.session_state.get("runner")
 
         if not runner:
             return
@@ -101,15 +97,10 @@ class ExecutionControlPanel:
             logs = []
             while not runner.log_queue.empty():
                 log_msg = runner.log_queue.get_nowait()
-                level = log_msg.get('level', 'INFO')
-                message = log_msg.get('message', '')
+                level = log_msg.get("level", "INFO")
+                message = log_msg.get("message", "")
 
-                level_emoji = {
-                    "INFO": "ℹ️",
-                    "WARNING": "⚠️",
-                    "ERROR": "❌",
-                    "SUCCESS": "✅"
-                }
+                level_emoji = {"INFO": "ℹ️", "WARNING": "⚠️", "ERROR": "❌", "SUCCESS": "✅"}
                 emoji = level_emoji.get(level, "📝")
                 logs.append(f"{emoji} {message}")
 
@@ -126,18 +117,14 @@ class ExecutionControlPanel:
     @staticmethod
     def show_compact_controls():
         """紧凑版控制面板（用于侧边栏）"""
-        runner = st.session_state.get('runner')
+        runner = st.session_state.get("runner")
 
         if not runner:
             st.caption("⚪ 无运行任务")
             return
 
         status = runner.get_status()
-        status_emoji = {
-            "running": "▶️",
-            "paused": "⏸️",
-            "stopped": "⏹️"
-        }
+        status_emoji = {"running": "▶️", "paused": "⏸️", "stopped": "⏹️"}
 
         st.markdown(f"**状态:** {status_emoji.get(status, '❓')} {status}")
 
@@ -172,7 +159,7 @@ class ExecutionMonitor:
         Args:
             runner: Runner 实例
         """
-        runner = runner or st.session_state.get('runner')
+        runner = runner or st.session_state.get("runner")
 
         if not runner:
             st.info("暂无执行任务")

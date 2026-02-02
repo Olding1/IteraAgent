@@ -18,7 +18,7 @@ class BlueprintReviewPage:
     def show(
         graph: GraphStructure,
         simulation: Optional[SimulationResult] = None,
-        agent_name: str = "Agent"
+        agent_name: str = "Agent",
     ) -> Tuple[bool, Optional[str]]:
         """
         显示 Blueprint 审查页面
@@ -86,10 +86,7 @@ class BlueprintReviewPage:
         # 显示执行轨迹
         if simulation.execution_trace:
             st.text_area(
-                "执行轨迹",
-                simulation.execution_trace,
-                height=400,
-                label_visibility="collapsed"
+                "执行轨迹", simulation.execution_trace, height=400, label_visibility="collapsed"
             )
         else:
             st.info("无执行轨迹")
@@ -101,11 +98,7 @@ class BlueprintReviewPage:
             st.warning(f"⚠️ 发现 {len(simulation.issues)} 个问题")
 
             for i, issue in enumerate(simulation.issues, 1):
-                severity_emoji = {
-                    "critical": "🔴",
-                    "warning": "🟡",
-                    "info": "🔵"
-                }
+                severity_emoji = {"critical": "🔴", "warning": "🟡", "info": "🔵"}
                 emoji = severity_emoji.get(issue.severity, "⚪")
 
                 with st.expander(f"{emoji} 问题 {i}: {issue.description[:50]}..."):
@@ -186,9 +179,7 @@ class BlueprintReviewPage:
 
         # 反馈输入
         feedback = st.text_area(
-            "反馈信息（可选）",
-            placeholder="如果拒绝，请说明原因或提出修改建议...",
-            height=100
+            "反馈信息（可选）", placeholder="如果拒绝，请说明原因或提出修改建议...", height=100
         )
 
         # 按钮
@@ -214,9 +205,7 @@ class BlueprintReviewPage:
 
 # 便捷函数
 def show_blueprint_review(
-    graph: GraphStructure,
-    simulation: Optional[SimulationResult] = None,
-    agent_name: str = "Agent"
+    graph: GraphStructure, simulation: Optional[SimulationResult] = None, agent_name: str = "Agent"
 ) -> Tuple[bool, Optional[str]]:
     """
     显示 Blueprint 审查页面

@@ -8,7 +8,7 @@ from .state_schema import StateSchema
 
 class NodeDef(BaseModel):
     """Graph node definition.
-    
+
     Represents a single node in the LangGraph topology.
     """
 
@@ -24,7 +24,7 @@ class NodeDef(BaseModel):
 
 class EdgeDef(BaseModel):
     """Regular edge definition.
-    
+
     Represents a direct connection between two nodes.
     """
 
@@ -34,7 +34,7 @@ class EdgeDef(BaseModel):
 
 class ConditionalEdgeDef(BaseModel):
     """Conditional edge definition.
-    
+
     Represents a conditional branch in the graph flow.
     """
 
@@ -50,15 +50,15 @@ class ConditionalEdgeDef(BaseModel):
 
 class GraphStructure(BaseModel):
     """Complete graph structure definition.
-    
+
     Defines the entire LangGraph topology including nodes, edges,
     and conditional branches.
     """
-    
+
     # New fields for three-step design method
     pattern: PatternConfig = Field(..., description="Design pattern configuration")
     state_schema: StateSchema = Field(..., description="State structure definition")
-    
+
     # Original fields
     nodes: List[NodeDef] = Field(..., min_length=1, description="Node list")
     edges: List[EdgeDef] = Field(default_factory=list, description="Regular edge list")
@@ -70,7 +70,7 @@ class GraphStructure(BaseModel):
     @model_validator(mode="after")
     def validate_graph(self) -> "GraphStructure":
         """Validate graph integrity.
-        
+
         Ensures all edge references point to valid nodes.
         """
         node_ids = {node.id for node in self.nodes}
@@ -85,9 +85,7 @@ class GraphStructure(BaseModel):
         # Validate conditional edges
         for cond_edge in self.conditional_edges:
             if cond_edge.source not in node_ids:
-                raise ValueError(
-                    f"Conditional edge source '{cond_edge.source}' not found in nodes"
-                )
+                raise ValueError(f"Conditional edge source '{cond_edge.source}' not found in nodes")
             for branch_target in cond_edge.branches.values():
                 if branch_target not in node_ids and branch_target != "END":
                     raise ValueError(

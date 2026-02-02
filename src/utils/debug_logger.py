@@ -26,7 +26,7 @@ def is_debug_enabled() -> bool:
 def debug_log(component: str, message: str, **kwargs):
     """
     Log debug message (only shown in debug mode).
-    
+
     Args:
         component: Component name (e.g., "Runner", "ToolDiscovery")
         message: Log message
@@ -34,9 +34,9 @@ def debug_log(component: str, message: str, **kwargs):
     """
     if not _DEBUG_ENABLED:
         return
-    
+
     prefix = f"🔍 [{component}]"
-    
+
     if kwargs:
         extra = " ".join(f"{k}={v}" for k, v in kwargs.items())
         print(f"{prefix} {message} ({extra})", file=sys.stderr)
@@ -47,7 +47,7 @@ def debug_log(component: str, message: str, **kwargs):
 def info_log(message: str, prefix: str = "ℹ️"):
     """
     Log info message (always shown).
-    
+
     Args:
         message: Log message
         prefix: Emoji prefix (default: ℹ️)
@@ -73,4 +73,3 @@ def error_log(message: str):
 def step_log(step_name: str, step_num: int, total_steps: int):
     """Log step start (always shown)."""
     print(f"\n🚀 [步骤 {step_num}/{total_steps}] {step_name}...")
-

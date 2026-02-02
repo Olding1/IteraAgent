@@ -31,10 +31,10 @@ class HealthCheckResult(BaseModel):
 
 async def check_builder_api(config: BuilderAPIConfig) -> HealthCheckResult:
     """Check Builder API connectivity.
-    
+
     Args:
         config: Builder API configuration
-        
+
     Returns:
         HealthCheckResult with status and details
     """
@@ -72,10 +72,10 @@ async def check_builder_api(config: BuilderAPIConfig) -> HealthCheckResult:
 
 async def check_runtime_api(config: RuntimeAPIConfig) -> HealthCheckResult:
     """Check Runtime API connectivity.
-    
+
     Args:
         config: Runtime API configuration
-        
+
     Returns:
         HealthCheckResult with status and details
     """
@@ -161,11 +161,11 @@ async def check_all_apis(
     builder_config: BuilderAPIConfig, runtime_config: RuntimeAPIConfig
 ) -> Tuple[HealthCheckResult, HealthCheckResult]:
     """Check both Builder and Runtime APIs concurrently.
-    
+
     Args:
         builder_config: Builder API configuration
         runtime_config: Runtime API configuration
-        
+
     Returns:
         Tuple of (builder_result, runtime_result)
     """

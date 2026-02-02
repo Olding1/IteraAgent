@@ -93,7 +93,7 @@ class StateInspector:
             "状态 JSON（可编辑）",
             value=state_json,
             height=400,
-            help="修改 JSON 格式的状态数据，点击下方按钮应用修改"
+            help="修改 JSON 格式的状态数据，点击下方按钮应用修改",
         )
 
         # 按钮区域

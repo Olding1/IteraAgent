@@ -14,11 +14,7 @@ class DifyExporter:
     """Dify 导出器"""
 
     @staticmethod
-    def export_to_yaml(
-        graph: GraphStructure,
-        agent_name: str,
-        output_path: Path
-    ) -> Path:
+    def export_to_yaml(graph: GraphStructure, agent_name: str, output_path: Path) -> Path:
         """
         导出为 Dify YAML
 
@@ -39,14 +35,14 @@ class DifyExporter:
             dify_app.model_dump(exclude_none=True),
             allow_unicode=True,
             sort_keys=False,
-            default_flow_style=False
+            default_flow_style=False,
         )
 
         # 写入文件
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(yaml_content)
 
         return output_path
@@ -70,7 +66,7 @@ class DifyExporter:
             dify_app.model_dump(exclude_none=True),
             allow_unicode=True,
             sort_keys=False,
-            default_flow_style=False
+            default_flow_style=False,
         )
 
     @staticmethod
@@ -95,9 +91,7 @@ class DifyExporter:
                 mapping = NodeMapper.TOOL_MAPPING.get(tool_name)
 
                 if not mapping or not mapping.get("supported"):
-                    warnings.append(
-                        f"工具 '{tool_name}' 在 Dify 中不支持，将转换为 Code 节点"
-                    )
+                    warnings.append(f"工具 '{tool_name}' 在 Dify 中不支持，将转换为 Code 节点")
 
         # 检查 RAG 节点
         has_rag = any(node.type == "rag" for node in graph.nodes)
@@ -117,11 +111,7 @@ class DifyExporter:
 
 
 # 便捷函数
-def export_to_dify(
-    graph: GraphStructure,
-    agent_name: str,
-    output_path: Path
-) -> Path:
+def export_to_dify(graph: GraphStructure, agent_name: str, output_path: Path) -> Path:
     """
     导出为 Dify YAML
 

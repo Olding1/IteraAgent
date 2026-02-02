@@ -36,9 +36,7 @@ class GraphVisualizer:
 
         # 添加节点定义
         for node in graph.nodes:
-            config = GraphVisualizer.NODE_TYPE_CONFIG.get(
-                node.type, {"emoji": "📦", "style": ""}
-            )
+            config = GraphVisualizer.NODE_TYPE_CONFIG.get(node.type, {"emoji": "📦", "style": ""})
             emoji = config["emoji"]
 
             # 节点标签：emoji + ID
@@ -47,13 +45,13 @@ class GraphVisualizer:
             # 根据节点类型选择形状
             if node.type == "conditional":
                 # 条件节点使用菱形
-                lines.append(f'    {node.id}{{{node_label}}}')
+                lines.append(f"    {node.id}{{{node_label}}}")
             elif node.type == "llm":
                 # LLM 节点使用圆角矩形
-                lines.append(f'    {node.id}([{node_label}])')
+                lines.append(f"    {node.id}([{node_label}])")
             else:
                 # 其他节点使用矩形
-                lines.append(f'    {node.id}[{node_label}]')
+                lines.append(f"    {node.id}[{node_label}]")
 
             # 添加样式
             if config["style"]:
@@ -70,13 +68,15 @@ class GraphVisualizer:
                 if target == "END":
                     # 创建一个虚拟的 END 节点
                     if "END" not in [node.id for node in graph.nodes]:
-                        lines.insert(1, '    END([🏁 END])')
-                        lines.insert(2, '    style END fill:#ffebee,stroke:#c62828,stroke-width:2px')
+                        lines.insert(1, "    END([🏁 END])")
+                        lines.insert(
+                            2, "    style END fill:#ffebee,stroke:#c62828,stroke-width:2px"
+                        )
                     label = "结束" if key == "end" else key
-                    lines.append(f'    {cond_edge.source} -->|{label}| END')
+                    lines.append(f"    {cond_edge.source} -->|{label}| END")
                 else:
                     label = key
-                    lines.append(f'    {cond_edge.source} -->|{label}| {target}')
+                    lines.append(f"    {cond_edge.source} -->|{label}| {target}")
 
         return "\n".join(lines)
 
@@ -147,9 +147,7 @@ class GraphVisualizer:
         st.subheader("🔍 节点详情")
 
         for node in graph.nodes:
-            config = GraphVisualizer.NODE_TYPE_CONFIG.get(
-                node.type, {"emoji": "📦", "style": ""}
-            )
+            config = GraphVisualizer.NODE_TYPE_CONFIG.get(node.type, {"emoji": "📦", "style": ""})
 
             with st.expander(f"{config['emoji']} {node.id} ({node.type})"):
                 col1, col2 = st.columns(2)
@@ -169,7 +167,7 @@ class GraphVisualizer:
                             node.role_description,
                             height=100,
                             key=f"role_{node.id}",
-                            label_visibility="collapsed"
+                            label_visibility="collapsed",
                         )
 
                 if node.config:
@@ -249,12 +247,14 @@ class GraphVisualizer:
         # 创建表格数据
         table_data = []
         for field in graph.state_schema.fields:
-            table_data.append({
-                "字段名": field.name,
-                "类型": field.type,
-                "描述": field.description or "-",
-                "Reducer": field.reducer or "default"
-            })
+            table_data.append(
+                {
+                    "字段名": field.name,
+                    "类型": field.type,
+                    "描述": field.description or "-",
+                    "Reducer": field.reducer or "default",
+                }
+            )
 
         st.table(table_data)
 

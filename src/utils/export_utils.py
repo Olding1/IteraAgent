@@ -15,28 +15,26 @@ class ExportUtils:
 
     # 需要排除的文件和目录
     EXCLUDE_PATTERNS = [
-        '__pycache__',
-        '*.pyc',
-        '*.pyo',
-        '*.pyd',
-        '.git',
-        '.gitignore',
-        'venv',
-        '.venv',
-        'env',
-        '.env',
-        '.trace',
-        '.reports',
-        '*.log',
-        '.DS_Store',
-        'Thumbs.db'
+        "__pycache__",
+        "*.pyc",
+        "*.pyo",
+        "*.pyd",
+        ".git",
+        ".gitignore",
+        "venv",
+        ".venv",
+        "env",
+        ".env",
+        ".trace",
+        ".reports",
+        "*.log",
+        ".DS_Store",
+        "Thumbs.db",
     ]
 
     @staticmethod
     def export_agent_to_zip(
-        agent_path: Path,
-        output_path: Path,
-        exclude_patterns: Optional[List[str]] = None
+        agent_path: Path, output_path: Path, exclude_patterns: Optional[List[str]] = None
     ) -> Path:
         """
         将 Agent 打包为 ZIP
@@ -61,9 +59,9 @@ class ExportUtils:
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # 创建 ZIP 文件
-        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             # 遍历所有文件
-            for file_path in agent_path.rglob('*'):
+            for file_path in agent_path.rglob("*"):
                 if file_path.is_file():
                     # 检查是否应该排除
                     if ExportUtils._should_exclude(file_path, agent_path, exclude):
@@ -100,11 +98,11 @@ class ExportUtils:
         for part in rel_path.parts:
             for pattern in exclude_patterns:
                 # 简单的模式匹配
-                if pattern.startswith('*'):
+                if pattern.startswith("*"):
                     # 后缀匹配
                     if part.endswith(pattern[1:]):
                         return True
-                elif pattern.endswith('*'):
+                elif pattern.endswith("*"):
                     # 前缀匹配
                     if part.startswith(pattern[:-1]):
                         return True
@@ -117,9 +115,7 @@ class ExportUtils:
 
     @staticmethod
     def export_agent_directory(
-        agent_path: Path,
-        output_dir: Path,
-        exclude_patterns: Optional[List[str]] = None
+        agent_path: Path, output_dir: Path, exclude_patterns: Optional[List[str]] = None
     ) -> Path:
         """
         将 Agent 复制到指定目录
@@ -145,7 +141,7 @@ class ExportUtils:
         output_agent_dir.mkdir(parents=True, exist_ok=True)
 
         # 复制文件
-        for file_path in agent_path.rglob('*'):
+        for file_path in agent_path.rglob("*"):
             if file_path.is_file():
                 # 检查是否应该排除
                 if ExportUtils._should_exclude(file_path, agent_path, exclude):
@@ -185,7 +181,7 @@ class ExportUtils:
         total_size = 0
 
         # 遍历所有文件
-        for file_path in agent_path.rglob('*'):
+        for file_path in agent_path.rglob("*"):
             if file_path.is_file():
                 # 检查是否应该排除
                 if ExportUtils._should_exclude(file_path, agent_path, exclude):
@@ -206,7 +202,7 @@ class ExportUtils:
         Returns:
             格式化后的字符串
         """
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size_bytes < 1024.0:
                 return f"{size_bytes:.2f} {unit}"
             size_bytes /= 1024.0

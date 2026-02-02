@@ -10,6 +10,7 @@ from typing import List, Dict, Any, Optional
 
 class DifyNodeData(BaseModel):
     """Dify 节点数据"""
+
     title: str
     type: str  # start, llm, tool, knowledge-retrieval, if-else, answer, code
     desc: str = ""
@@ -45,6 +46,7 @@ class DifyNodeData(BaseModel):
 
 class DifyNode(BaseModel):
     """Dify 节点"""
+
     id: str
     data: DifyNodeData
     position: Dict[str, int]  # {"x": 0, "y": 0}
@@ -56,6 +58,7 @@ class DifyNode(BaseModel):
 
 class DifyEdge(BaseModel):
     """Dify 连线"""
+
     id: str
     source: str
     target: str
@@ -66,18 +69,21 @@ class DifyEdge(BaseModel):
 
 class DifyGraph(BaseModel):
     """Dify Graph"""
+
     nodes: List[DifyNode]
     edges: List[DifyEdge]
 
 
 class DifyWorkflow(BaseModel):
     """Dify Workflow"""
+
     graph: DifyGraph
     version: str = "0.1.0"
 
 
 class DifyApp(BaseModel):
     """Dify App (顶层结构)"""
+
     app: Dict[str, Any]  # name, mode, icon, description
     kind: str = "app"
     version: str = "0.1.0"

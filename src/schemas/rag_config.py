@@ -6,7 +6,7 @@ from typing import Literal, Optional
 
 class RAGConfig(BaseModel):
     """RAG configuration schema.
-    
+
     Defines the retrieval-augmented generation strategy including
     text splitting, embedding, vector storage, and retrieval parameters.
     """
@@ -15,13 +15,9 @@ class RAGConfig(BaseModel):
     splitter: Literal["recursive", "character", "token", "semantic"] = Field(
         default="recursive", description="Text splitter type"
     )
-    chunk_size: int = Field(
-        default=1000, ge=100, le=4000, description="Chunk size in characters"
-    )
-    chunk_overlap: int = Field(
-        default=200, ge=0, le=500, description="Overlap between chunks"
-    )
-    
+    chunk_size: int = Field(default=1000, ge=100, le=4000, description="Chunk size in characters")
+    chunk_overlap: int = Field(default=200, ge=0, le=500, description="Overlap between chunks")
+
     # Vector Store Configuration
     vector_store: Literal["chroma", "faiss", "pgvector"] = Field(
         default="chroma", description="Vector database type"
@@ -32,7 +28,7 @@ class RAGConfig(BaseModel):
     collection_name: Optional[str] = Field(
         default=None, description="Collection name (auto-generated if None)"
     )
-    
+
     # Embedding Model Configuration
     embedding_provider: Literal["openai", "huggingface", "ollama"] = Field(
         default="openai", description="Embedding model provider"
@@ -43,16 +39,15 @@ class RAGConfig(BaseModel):
     embedding_dimension: Optional[int] = Field(
         default=None, description="Embedding dimension (optional)"
     )
-    
+
     # Legacy field for backward compatibility
     embedding_model: str = Field(
-        default="openai", description="Embedding model identifier (deprecated, use embedding_provider)"
+        default="openai",
+        description="Embedding model identifier (deprecated, use embedding_provider)",
     )
-    
+
     # Retrieval Configuration
-    k_retrieval: int = Field(
-        default=5, ge=1, le=20, description="Number of documents to retrieve"
-    )
+    k_retrieval: int = Field(default=5, ge=1, le=20, description="Number of documents to retrieve")
     retriever_type: Literal["basic", "parent_document", "multi_query"] = Field(
         default="basic", description="Retriever type"
     )
@@ -66,17 +61,18 @@ class RAGConfig(BaseModel):
         default=20, ge=1, le=100, description="Number of documents to fetch for MMR"
     )
     lambda_mult: float = Field(
-        default=0.5, ge=0.0, le=1.0, description="Diversity parameter for MMR (0=max diversity, 1=max relevance)"
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Diversity parameter for MMR (0=max diversity, 1=max relevance)",
     )
-    
+
     # Reranker Configuration
-    reranker_enabled: bool = Field(
-        default=False, description="Whether to enable reranking"
-    )
+    reranker_enabled: bool = Field(default=False, description="Whether to enable reranking")
     reranker_provider: Optional[Literal["cohere", "bge", "flashrank"]] = Field(
         default=None, description="Reranker provider"
     )
-    
+
     # Hybrid Search Configuration
     enable_hybrid_search: bool = Field(
         default=False, description="Enable hybrid search (BM25 + Vector)"

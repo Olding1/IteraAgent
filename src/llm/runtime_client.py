@@ -7,7 +7,7 @@ import os
 
 class RuntimeAPIConfig(BaseModel):
     """Configuration for Runtime API.
-    
+
     This configuration is used by generated agents during execution.
     """
 
@@ -21,7 +21,7 @@ class RuntimeAPIConfig(BaseModel):
 
 class RuntimeClient:
     """Runtime API client for generated agent execution.
-    
+
     This is a lightweight wrapper that generated agents use to call LLMs.
     Unlike BuilderClient, this supports local models (Ollama) and is designed
     for cost-effective runtime execution.
@@ -29,7 +29,7 @@ class RuntimeClient:
 
     def __init__(self, config: RuntimeAPIConfig):
         """Initialize Runtime API client.
-        
+
         Args:
             config: Runtime API configuration
         """
@@ -38,9 +38,9 @@ class RuntimeClient:
     @classmethod
     def from_env(cls) -> "RuntimeClient":
         """Create Runtime client from environment variables.
-        
+
         This is the primary way generated agents initialize the client.
-        
+
         Returns:
             Initialized RuntimeClient
         """
@@ -56,7 +56,7 @@ class RuntimeClient:
 
     def get_env_dict(self) -> dict[str, str]:
         """Get environment variables dictionary for subprocess injection.
-        
+
         Returns:
             Dictionary of environment variables
         """

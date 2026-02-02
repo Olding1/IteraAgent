@@ -9,12 +9,14 @@ import json
 # Optional imports for different providers
 try:
     from langchain_openai import ChatOpenAI
+
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
 
 try:
     from langchain_anthropic import ChatAnthropic
+
     HAS_ANTHROPIC = True
 except ImportError:
     HAS_ANTHROPIC = False
@@ -38,7 +40,7 @@ class BuilderAPIConfig(BaseModel):
 
 class BuilderClient:
     """Builder API client for construction-time LLM calls.
-    
+
     This client is used by PM, Graph Designer, RAG Builder, and other
     construction-time components. It uses a powerful model (GPT-4o, Claude 3.5)
     to generate high-quality agent designs.
@@ -58,15 +60,15 @@ class BuilderClient:
             "total_calls": 0,
             "total_input_tokens": 0,
             "total_output_tokens": 0,
-            "total_cost_usd": 0.0
+            "total_cost_usd": 0.0,
         }
 
     def _init_client(self, config: BuilderAPIConfig) -> Any:
         """Initialize LLM client based on provider.
-        
+
         Args:
             config: Builder API configuration
-            
+
         Returns:
             Initialized LLM client
         """
@@ -100,9 +102,7 @@ class BuilderClient:
         else:
             raise ValueError(f"Unsupported provider: {config.provider}")
 
-    async def call(
-        self, prompt: str, schema: Optional[Type[BaseModel]] = None
-    ) -> str | BaseModel:
+    async def call(self, prompt: str, schema: Optional[Type[BaseModel]] = None) -> str | BaseModel:
         """Call Builder API with optional structured output.
 
         Args:
@@ -123,25 +123,22 @@ class BuilderClient:
             return response.content
 
     async def generate_structured(
-        self, 
-        prompt: str, 
-        response_model: Type[T],
-        temperature: Optional[float] = None
+        self, prompt: str, response_model: Type[T], temperature: Optional[float] = None
     ) -> T:
         """
         通用的结构化输出生成器
         自动处理 DeepSeek 等不支持 response_format 的情况
-        
+
         Args:
             prompt: 输入提示词
             response_model: Pydantic 模型类
             temperature: 可选的温度参数
-        
+
         Returns:
             验证后的 Pydantic 模型实例
         """
         temp = temperature if temperature is not None else self.config.temperature
-        
+
         # 获取 Pydantic 的 Schema
         schema = response_model.model_json_schema()
         schema_str = json.dumps(schema, indent=2, ensure_ascii=False)
@@ -153,7 +150,7 @@ class BuilderClient:
             structured_llm = self.client.with_structured_output(response_model)
             result = await structured_llm.ainvoke(prompt)
             # 🆕 Phase 5: 统计 Token (尝试从 result 中提取)
-            if hasattr(result, '__dict__'):
+            if hasattr(result, "__dict__"):
                 # 如果 result 是对象，尝试获取原始响应
                 pass  # structured output 通常不包含 usage 信息
             return result
@@ -161,12 +158,18 @@ class BuilderClient:
         except Exception as e:
             # 捕获各种可能的错误
             error_str = str(e).lower()
-            
+
             # 检查是否是 response_format 不支持的错误
-            if any(keyword in error_str for keyword in [
-                "response_format", "unavailable", "400", 
-                "bad request", "invalid_request_error"
-            ]):
+            if any(
+                keyword in error_str
+                for keyword in [
+                    "response_format",
+                    "unavailable",
+                    "400",
+                    "bad request",
+                    "invalid_request_error",
+                ]
+            ):
                 print(f"⚠️  API 不支持原生 JSON 模式，切换到 Prompt 增强模式...")
                 return await self._generate_structured_fallback(
                     prompt, response_model, schema_str, temp
@@ -176,21 +179,17 @@ class BuilderClient:
                 raise e
 
     async def _generate_structured_fallback(
-        self, 
-        prompt: str, 
-        response_model: Type[T], 
-        schema_str: str,
-        temperature: float
+        self, prompt: str, response_model: Type[T], schema_str: str, temperature: float
     ) -> T:
         """
         回退模式：通过 Prompt 强制模型输出 JSON，并使用正则提取
-        
+
         Args:
             prompt: 原始提示词
             response_model: Pydantic 模型类
             schema_str: JSON Schema 字符串
             temperature: 温度参数
-        
+
         Returns:
             验证后的 Pydantic 模型实例
         """
@@ -220,7 +219,7 @@ class BuilderClient:
             print(f"❌ JSON 提取失败: {e}")
             print(f"原始文本: {raw_text[:200]}...")
             raise ValueError(f"Failed to extract JSON from LLM response: {e}")
-        
+
         # 4. Pydantic 校验 (这一步最关键，确保格式对了)
         try:
             return response_model.model_validate_json(json_str)
@@ -254,19 +253,19 @@ class BuilderClient:
         usage = None
 
         # LangChain 响应对象通常有 response_metadata
-        if hasattr(response, 'response_metadata'):
-            usage = response.response_metadata.get('token_usage')
+        if hasattr(response, "response_metadata"):
+            usage = response.response_metadata.get("token_usage")
 
         # 或者直接有 usage 属性
-        if not usage and hasattr(response, 'usage'):
+        if not usage and hasattr(response, "usage"):
             usage = response.usage
 
         if usage:
             self.token_stats["total_calls"] += 1
 
             # 提取 token 数量
-            input_tokens = usage.get('prompt_tokens', 0)
-            output_tokens = usage.get('completion_tokens', 0)
+            input_tokens = usage.get("prompt_tokens", 0)
+            output_tokens = usage.get("completion_tokens", 0)
 
             self.token_stats["total_input_tokens"] += input_tokens
             self.token_stats["total_output_tokens"] += output_tokens
@@ -294,13 +293,11 @@ class BuilderClient:
             "gpt-4-turbo": {"input": 0.01, "output": 0.03},
             "gpt-4": {"input": 0.03, "output": 0.06},
             "gpt-3.5-turbo": {"input": 0.0005, "output": 0.0015},
-
             # Anthropic
             "claude-3-5-sonnet-20241022": {"input": 0.003, "output": 0.015},
             "claude-3-opus-20240229": {"input": 0.015, "output": 0.075},
             "claude-3-sonnet-20240229": {"input": 0.003, "output": 0.015},
             "claude-3-haiku-20240307": {"input": 0.00025, "output": 0.00125},
-
             # DeepSeek
             "deepseek-chat": {"input": 0.0001, "output": 0.0002},
             "deepseek-coder": {"input": 0.0001, "output": 0.0002},
@@ -342,13 +339,13 @@ class BuilderClient:
             "total_calls": 0,
             "total_input_tokens": 0,
             "total_output_tokens": 0,
-            "total_cost_usd": 0.0
+            "total_cost_usd": 0.0,
         }
 
     @classmethod
     def from_env(cls) -> "BuilderClient":
         """Create Builder client from environment variables.
-        
+
         Returns:
             Initialized BuilderClient
         """
@@ -362,4 +359,3 @@ class BuilderClient:
             temperature=float(os.getenv("BUILDER_TEMPERATURE", "0.7")),
         )
         return cls(config)
-

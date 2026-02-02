@@ -12,15 +12,12 @@ from ..tools.definitions import CURATED_TOOLS
 from ..utils.config_utils import atomic_write_json
 
 
-
 class CompileResult(BaseModel):
     """Result of compilation process."""
 
     success: bool = Field(..., description="Whether compilation succeeded")
     output_dir: Path = Field(..., description="Output directory path")
-    generated_files: list[str] = Field(
-        default_factory=list, description="List of generated files"
-    )
+    generated_files: list[str] = Field(default_factory=list, description="List of generated files")
     error_message: Optional[str] = Field(
         default=None, description="Error message if compilation failed"
     )
@@ -28,14 +25,14 @@ class CompileResult(BaseModel):
 
 class Compiler:
     """Compiler for generating agent code from JSON configurations.
-    
+
     Transforms JSON intermediate representation into executable Python code
     using Jinja2 templates.
     """
 
     def __init__(self, template_dir: Path):
         """Initialize compiler with template directory.
-        
+
         Args:
             template_dir: Path to directory containing Jinja2 templates
         """
@@ -45,40 +42,38 @@ class Compiler:
             trim_blocks=True,
             lstrip_blocks=True,
         )
-        
+
         # 🆕 Add custom filter for sanitizing collection names
         def sanitize_collection_name(name: str) -> str:
             """Replace non-ASCII and special characters with underscores"""
             import re
+
             # 1. Replace invalid chars with underscores
-            clean = re.sub(r'[^a-zA-Z0-9._-]', '_', name)
-            
+            clean = re.sub(r"[^a-zA-Z0-9._-]", "_", name)
+
             # 2. Ensure start/end with alphanumeric
             if not clean or not clean[0].isalnum():
                 clean = "agent" + clean
             if not clean[-1].isalnum():
                 clean = clean + "docs"
-                
+
             # 3. Ensure length (3-63) - Chroma allows 512 but safe limit is better
             if len(clean) < 3:
                 clean = clean + "_data"
-            
-            # 4. Collapse multiple underscores
-            clean = re.sub(r'_{2,}', '_', clean)
-            
-            return clean
-        
-        self.env.filters['sanitize_collection_name'] = sanitize_collection_name
 
-    def _prepare_tool_context(
-        self, 
-        enabled_tools: list[str]
-    ) -> dict:
+            # 4. Collapse multiple underscores
+            clean = re.sub(r"_{2,}", "_", clean)
+
+            return clean
+
+        self.env.filters["sanitize_collection_name"] = sanitize_collection_name
+
+    def _prepare_tool_context(self, enabled_tools: list[str]) -> dict:
         """预处理工具元数据,生成模板所需的清洗数据 (方案 A+)
-        
+
         Args:
             enabled_tools: 启用的工具 ID 列表
-        
+
         Returns:
             {
                 "tool_imports": ["from langchain_community.tools import TavilySearchResults"],
@@ -95,61 +90,60 @@ class Compiler:
         """
         tool_imports = set()
         tool_inits = []
-        
+
         for tool_id in enabled_tools:
             # 从 CURATED_TOOLS 获取元数据
-            meta = next((t for t in CURATED_TOOLS if t['id'] == tool_id), None)
+            meta = next((t for t in CURATED_TOOLS if t["id"] == tool_id), None)
             if not meta:
                 print(f"⚠️ Warning: Tool '{tool_id}' not found in CURATED_TOOLS")
                 continue
-            
+
             # 1. 解析导入路径 (Python 处理,不在模板里做)
-            import_path = meta.get('import_path')
+            import_path = meta.get("import_path")
             if not import_path:
                 print(f"⚠️ Warning: Tool '{tool_id}' missing import_path")
                 continue
-                
+
             try:
                 module_path, class_name = import_path.rsplit(".", 1)
             except ValueError:
                 print(f"⚠️ Warning: Invalid import_path for '{tool_id}': {import_path}")
                 continue
-            
+
             tool_imports.add(f"from {module_path} import {class_name}")
-            
+
             # 2. 准备初始化参数
             init_params = []
-            
+
             # 处理 API Key
-            if meta.get('requires_api_key'):
-                env_var = meta.get('env_var')
+            if meta.get("requires_api_key"):
+                env_var = meta.get("env_var")
                 if env_var:
                     init_params.append(f'api_key=os.getenv("{env_var}")')
-            
+
             # 处理默认参数 (从 args_schema 提取)
-            args_schema = meta.get('args_schema', {})
-            properties = args_schema.get('properties', {})
-            
+            args_schema = meta.get("args_schema", {})
+            properties = args_schema.get("properties", {})
+
             for prop_name, prop_def in properties.items():
-                if 'default' in prop_def:
-                    default_value = prop_def['default']
+                if "default" in prop_def:
+                    default_value = prop_def["default"]
                     if isinstance(default_value, str):
                         init_params.append(f'{prop_name}="{default_value}"')
                     else:
-                        init_params.append(f'{prop_name}={default_value}')
-            
-            tool_inits.append({
-                "name": meta.get('name', tool_id),
-                "id": tool_id,
-                "class_name": class_name,
-                "params": ", ".join(init_params),
-                "env_var": meta.get('env_var')
-            })
-        
-        return {
-            "tool_imports": sorted(list(tool_imports)),
-            "tool_inits": tool_inits
-        }
+                        init_params.append(f"{prop_name}={default_value}")
+
+            tool_inits.append(
+                {
+                    "name": meta.get("name", tool_id),
+                    "id": tool_id,
+                    "class_name": class_name,
+                    "params": ", ".join(init_params),
+                    "env_var": meta.get("env_var"),
+                }
+            )
+
+        return {"tool_imports": sorted(list(tool_imports)), "tool_inits": tool_inits}
 
     def compile(
         self,
@@ -160,14 +154,14 @@ class Compiler:
         output_dir: Path,
     ) -> CompileResult:
         """Compile JSON configurations into executable agent code.
-        
+
         Args:
             project_meta: Project metadata
             graph: Graph structure definition
             rag_config: RAG configuration (optional)
             tools_config: Tools configuration
             output_dir: Output directory for generated files
-            
+
         Returns:
             CompileResult with success status and generated files
         """
@@ -194,7 +188,9 @@ class Compiler:
                 "entry_point": graph.entry_point,
                 # Tools and config
                 "enabled_tools": tools_config.enabled_tools,
-                "enabled_tools_meta": [t for t in CURATED_TOOLS if t['id'] in tools_config.enabled_tools],
+                "enabled_tools_meta": [
+                    t for t in CURATED_TOOLS if t["id"] in tools_config.enabled_tools
+                ],
                 "agent_type": project_meta.task_type,
                 "language": project_meta.language,
                 "custom_instructions": project_meta.description,
@@ -217,10 +213,11 @@ class Compiler:
             # Generate agent.py
             agent_template = self.env.get_template("agent_template.py.j2")
             agent_code = agent_template.render(**context)
-            
+
             # Format code with black (if available)
             try:
                 import black
+
                 agent_code = black.format_str(agent_code, mode=black.Mode())
             except ImportError:
                 pass  # Black not available, skip formatting
@@ -258,13 +255,13 @@ class Compiler:
             real_env_file = output_dir / ".env"
             real_env_file.write_text(env_content, encoding="utf-8")
             generated_files.append(".env")
-            
+
             # 🆕 Phase 4: 生成 pip.conf (优化 2 - 预安装)
             pip_config = self._generate_pip_config()
             pip_config_file = output_dir / "pip.conf"
             pip_config_file.write_text(pip_config, encoding="utf-8")
             generated_files.append("pip.conf")
-            
+
             # 🆕 Phase 4: 生成安装脚本
             install_sh = self._generate_install_script_sh()
             install_sh_file = output_dir / "install.sh"
@@ -272,11 +269,12 @@ class Compiler:
             # 设置可执行权限 (Unix/Linux/Mac)
             try:
                 import os
+
                 os.chmod(install_sh_file, 0o755)
             except Exception:
                 pass  # Windows 不需要
             generated_files.append("install.sh")
-            
+
             install_bat = self._generate_install_script_bat()
             install_bat_file = output_dir / "install.bat"
             install_bat_file.write_text(install_bat, encoding="utf-8")
@@ -286,12 +284,12 @@ class Compiler:
             graph_file = output_dir / "graph.json"
             graph_file.write_text(graph.model_dump_json(indent=2), encoding="utf-8")
             generated_files.append("graph.json")
-            
+
             # 🆕 Save rag_config.json if RAG is enabled
             if rag_config:
                 atomic_write_json(output_dir / "rag_config.json", rag_config.model_dump())
                 generated_files.append("rag_config.json")
-            
+
             # 🆕 Save tools_config.json if tools are enabled
             if tools_config and len(tools_config.enabled_tools) > 0:
                 atomic_write_json(output_dir / "tools_config.json", tools_config.model_dump())
@@ -309,22 +307,22 @@ class Compiler:
             )
 
     def _generate_requirements(
-        self, 
-        has_rag: bool, 
+        self,
+        has_rag: bool,
         has_tools: bool,
         rag_config: Optional[RAGConfig] = None,
         file_paths: Optional[list] = None,
         include_testing: bool = True,  # 🆕 Phase 4: 添加测试依赖开关
     ) -> str:
         """Generate requirements.txt content based on features.
-        
+
         Args:
             has_rag: Whether RAG is enabled
             has_tools: Whether tools are enabled
             rag_config: RAG configuration (optional)
             file_paths: List of file paths for document loading
             include_testing: Whether to include DeepEval testing dependencies
-            
+
         Returns:
             Requirements.txt content as string
         """
@@ -346,7 +344,7 @@ class Compiler:
                     "tiktoken>=0.5.0",  # Token counting
                 ]
             )
-            
+
             # Vector store dependencies
             if rag_config.vector_store == "chroma":
                 requirements.append("chromadb>=0.4.22")
@@ -355,8 +353,7 @@ class Compiler:
             elif rag_config.vector_store == "pgvector":
                 requirements.append("pgvector>=0.2.0")
                 requirements.append("psycopg2-binary>=2.9.0")
-            
-            
+
             # Embedding model dependencies
             # Include all providers since we support runtime switching via env vars
             requirements.append("langchain-openai>=0.1.0")  # For OpenAI embeddings
@@ -364,13 +361,13 @@ class Compiler:
             # HuggingFace is optional, only add if explicitly configured
             if rag_config.embedding_provider == "huggingface":
                 requirements.append("sentence-transformers>=2.2.0")
-            
+
             # Document loader dependencies (based on file types)
             if file_paths and len(file_paths) > 0:
-                has_pdf = any(str(f).lower().endswith('.pdf') for f in file_paths)
-                has_docx = any(str(f).lower().endswith(('.docx', '.doc')) for f in file_paths)
-                has_md = any(str(f).lower().endswith('.md') for f in file_paths)
-                
+                has_pdf = any(str(f).lower().endswith(".pdf") for f in file_paths)
+                has_docx = any(str(f).lower().endswith((".docx", ".doc")) for f in file_paths)
+                has_md = any(str(f).lower().endswith(".md") for f in file_paths)
+
                 if has_pdf:
                     requirements.append("pypdf>=3.17.0")
                 if has_docx:
@@ -380,21 +377,23 @@ class Compiler:
                     requirements.append("markdown>=3.5.0")  # Required by unstructured for markdown
             else:
                 # Add all loaders if no file paths specified
-                requirements.extend([
-                    "pypdf>=3.17.0",
-                    "python-docx>=1.1.0",
-                    "markdown>=3.5.0",  # Required by unstructured for markdown
-                ])
-            
+                requirements.extend(
+                    [
+                        "pypdf>=3.17.0",
+                        "python-docx>=1.1.0",
+                        "markdown>=3.5.0",  # Required by unstructured for markdown
+                    ]
+                )
+
             # [v7.2 Update] Default Dependencies for Evolution Capability
             # Always install these so the Optimizer can switch to them at runtime
             requirements.append("rank-bm25>=0.2.2")
             requirements.append("flashrank>=0.2.0")
 
             # Hybrid search dependencies (Legacy check for jieba)
-            if hasattr(rag_config, 'language') and 'zh' in str(rag_config.language).lower():
+            if hasattr(rag_config, "language") and "zh" in str(rag_config.language).lower():
                 requirements.append("jieba>=0.42.1")
-            
+
             # Additional Reranker dependencies (if specific provider selected)
             if rag_config.reranker_enabled and rag_config.reranker_provider:
                 if rag_config.reranker_provider == "cohere":
@@ -410,7 +409,7 @@ class Compiler:
                     "langchain-community>=0.2.0",
                 ]
             )
-        
+
         # 🆕 Phase 4: DeepEval 测试依赖 (优化 2 - 预安装)
         if include_testing:
             requirements.extend(
@@ -428,7 +427,7 @@ class Compiler:
 
     def _generate_env_template(self) -> str:
         """Generate .env.template content.
-        
+
         Returns:
             Environment template content as string
         """
@@ -461,13 +460,13 @@ JUDGE_TEMPERATURE=0.0
 
     def _generate_env_file_content(self) -> str:
         """Generate .env content populated with current system configuration.
-        
+
         Returns:
             Populated .env content as string
         """
         import os
         from datetime import datetime
-        
+
         # Helper to get env with default (fallback to sensible defaults if env not set)
         def get_val(key, default):
             return os.getenv(key, default)
@@ -499,10 +498,10 @@ JUDGE_BASE_URL={get_val("JUDGE_BASE_URL", get_val("RUNTIME_BASE_URL", "https://a
 JUDGE_TIMEOUT={get_val("JUDGE_TIMEOUT", "60")}
 JUDGE_TEMPERATURE={get_val("JUDGE_TEMPERATURE", "0.0")}
 """
-    
+
     def _generate_pip_config(self) -> str:
         """🆕 Phase 4: 生成 pip.conf (使用国内镜像源)
-        
+
         Returns:
             pip.conf content as string
         """
@@ -511,10 +510,10 @@ index-url = https://pypi.tuna.tsinghua.edu.cn/simple
 [install]
 trusted-host = pypi.tuna.tsinghua.edu.cn
 """
-    
+
     def _generate_install_script_sh(self) -> str:
         """🆕 Phase 4: 生成 Linux/Mac 安装脚本
-        
+
         Returns:
             install.sh content as string
         """
@@ -574,10 +573,10 @@ else
     exit 1
 fi
 """
-    
+
     def _generate_install_script_bat(self) -> str:
         """🆕 Phase 4: 生成 Windows 安装脚本
-        
+
         Returns:
             install.bat content as string
         """

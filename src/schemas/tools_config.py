@@ -6,7 +6,7 @@ from typing import List
 
 class ToolsConfig(BaseModel):
     """Tools configuration schema.
-    
+
     Defines which tools are enabled for the agent.
     """
 
@@ -17,8 +17,6 @@ class ToolsConfig(BaseModel):
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         json_schema_extra={
-            "example": {
-                "enabled_tools": ["tavily_search_results_json", "llm_math_chain"]
-            }
-        }
+            "example": {"enabled_tools": ["tavily_search_results_json", "llm_math_chain"]}
+        },
     )

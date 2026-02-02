@@ -15,7 +15,7 @@ class TestType(str, Enum):
 
 class TestCase(BaseModel):
     """Single test case definition.
-    
+
     Represents one test scenario for validating agent behavior.
     """
 
@@ -36,31 +36,32 @@ class TestCase(BaseModel):
 
 class TestSuite(BaseModel):
     """Test suite containing multiple test cases.
-    
+
     Groups related test cases together.
     """
 
     cases: List[TestCase] = Field(..., description="List of test cases")
 
+
 model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "cases": [
-                    {
-                        "id": "test_001",
-                        "type": "fact_based",
-                        "input": "What is the net profit mentioned in the report?",
-                        "expected_keywords": ["5 million", "growth"],
-                        "timeout_seconds": 30,
-                    },
-                    {
-                        "id": "test_002",
-                        "type": "logic_based",
-                        "input": "Hello",
-                        "expected_tone": "friendly",
-                        "timeout_seconds": 30,
-                    },
-                ]
-            }
+    json_schema_extra={
+        "example": {
+            "cases": [
+                {
+                    "id": "test_001",
+                    "type": "fact_based",
+                    "input": "What is the net profit mentioned in the report?",
+                    "expected_keywords": ["5 million", "growth"],
+                    "timeout_seconds": 30,
+                },
+                {
+                    "id": "test_002",
+                    "type": "logic_based",
+                    "input": "Hello",
+                    "expected_tone": "friendly",
+                    "timeout_seconds": 30,
+                },
+            ]
         }
-    )
+    }
+)

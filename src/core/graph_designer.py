@@ -31,88 +31,85 @@ from ..llm import BuilderClient
 
 class GraphDesigner:
     """Graph Designer generates LangGraph structures using three-step method.
-    
+
     The Graph Designer follows a three-step process:
     1. Select Pattern - Choose appropriate design pattern
     2. Define State - Create state schema
     3. Design Graph - Generate nodes and edges
     """
-    
+
     def __init__(self, builder_client: BuilderClient):
         """Initialize Graph Designer with a builder client.
-        
+
         Args:
             builder_client: LLM client for graph design
         """
         self.builder = builder_client
         self.pattern_templates = self._load_pattern_templates()
-    
+
     def _load_pattern_templates(self) -> Dict[PatternType, Dict[str, Any]]:
         """Load pattern templates from YAML files.
-        
+
         Returns:
             Dict mapping PatternType to template configuration
         """
         templates = {}
         patterns_dir = Path(__file__).parent.parent.parent / "config" / "patterns"
-        
+
         if not patterns_dir.exists():
             print(f"Warning: Patterns directory not found: {patterns_dir}")
             return templates
-        
+
         pattern_files = {
             PatternType.SEQUENTIAL: "sequential.yaml",
             PatternType.REFLECTION: "reflection.yaml",
             PatternType.SUPERVISOR: "supervisor.yaml",
             PatternType.PLAN_EXECUTE: "plan_execute.yaml",
         }
-        
+
         for pattern_type, filename in pattern_files.items():
             file_path = patterns_dir / filename
             if file_path.exists():
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         templates[pattern_type] = yaml.safe_load(f)
                 except Exception as e:
                     print(f"Warning: Failed to load {filename}: {e}")
-        
+
         return templates
-    
+
     # ==================== Step 1: Pattern Selection ====================
-    
-    async def select_pattern(
-        self,
-        project_meta: ProjectMeta
-    ) -> PatternConfig:
+
+    async def select_pattern(self, project_meta: ProjectMeta) -> PatternConfig:
         """Step 1: Select appropriate design pattern.
-        
+
         Args:
             project_meta: Project metadata
-            
+
         Returns:
             PatternConfig
         """
         # Use heuristics to select pattern
         pattern_type = self._heuristic_pattern_selection(project_meta)
-        
+
         # Get template config
         template = self.pattern_templates.get(pattern_type, {})
-        
+
         # Create PatternConfig
         pattern = PatternConfig(
             pattern_type=pattern_type,
             max_iterations=3,  # Default
-            description=template.get("description", "")
+            description=template.get("description", ""),
         )
-        
+
         return pattern
-    
+
     def _heuristic_pattern_selection(self, project_meta: ProjectMeta) -> PatternType:
         """Heuristic-based pattern selection.
-        
+
         Args:
             project_meta: Project metadata
-            
+
         Returns:
             PatternType
         """
@@ -120,52 +117,63 @@ class GraphDesigner:
         if project_meta.execution_plan and len(project_meta.execution_plan) > 3:
             # Complex multi-step task -> Plan-Execute
             return PatternType.PLAN_EXECUTE
-        
+
         # Check for iteration/refinement keywords
         desc_lower = (project_meta.description + project_meta.user_intent_summary).lower()
-        
-        if any(word in desc_lower for word in ['迭代', '改进', '优化', '审核', '修改', 
-                                                 'iterate', 'improve', 'refine', 'review', 'revise']):
+
+        if any(
+            word in desc_lower
+            for word in [
+                "迭代",
+                "改进",
+                "优化",
+                "审核",
+                "修改",
+                "iterate",
+                "improve",
+                "refine",
+                "review",
+                "revise",
+            ]
+        ):
             # Needs iteration -> Reflection
             return PatternType.REFLECTION
-        
+
         # Check for multiple tools
         if project_meta.complexity_score >= 6:
             # Complex with tools -> Supervisor
             return PatternType.SUPERVISOR
-        
+
         # Default to Sequential
         return PatternType.SEQUENTIAL
-    
+
     # ==================== Step 2: State Definition ====================
-    
+
     async def define_state_schema(
-        self,
-        project_meta: ProjectMeta,
-        pattern: PatternConfig
+        self, project_meta: ProjectMeta, pattern: PatternConfig
     ) -> StateSchema:
         """Step 2: Define state schema.
-        
+
         Args:
             project_meta: Project metadata
             pattern: Selected pattern
-            
+
         Returns:
             StateSchema
         """
         # Start with base fields
         fields = self._get_base_state_fields()
-        
+
         # Add pattern-specific fields
         pattern_fields = self._get_pattern_state_fields(pattern)
         fields.extend(pattern_fields)
-        
+
         # Add RAG-specific fields if needed
         if project_meta.has_rag:
             fields.extend(self._get_rag_state_fields())
-        
+
         return StateSchema(fields=fields)
-    
+
     def _get_base_state_fields(self) -> List[StateField]:
         """Get base state fields required for all patterns."""
         return [
@@ -173,44 +181,54 @@ class GraphDesigner:
                 name="messages",
                 type=StateFieldType.LIST_MESSAGE,
                 description="对话历史",
-                reducer="add_messages"
+                reducer="add_messages",
             ),
             StateField(
                 name="is_finished",
                 type=StateFieldType.BOOL,
                 description="是否完成任务",
-                default=False
-            )
+                default=False,
+            ),
         ]
-    
+
     def _get_pattern_state_fields(self, pattern: PatternConfig) -> List[StateField]:
         """Get pattern-specific state fields."""
         fields = []
-        
+
         if pattern.pattern_type == PatternType.REFLECTION:
-            fields.extend([
-                StateField(name="draft", type=StateFieldType.STRING, default=""),
-                StateField(name="feedback", type=StateFieldType.STRING, default=""),
-                StateField(name="iteration_count", type=StateFieldType.INT, default=0),
-                StateField(name="max_iterations", type=StateFieldType.INT, default=pattern.max_iterations)
-            ])
-        
+            fields.extend(
+                [
+                    StateField(name="draft", type=StateFieldType.STRING, default=""),
+                    StateField(name="feedback", type=StateFieldType.STRING, default=""),
+                    StateField(name="iteration_count", type=StateFieldType.INT, default=0),
+                    StateField(
+                        name="max_iterations",
+                        type=StateFieldType.INT,
+                        default=pattern.max_iterations,
+                    ),
+                ]
+            )
+
         elif pattern.pattern_type == PatternType.SUPERVISOR:
-            fields.extend([
-                StateField(name="next_action", type=StateFieldType.STRING, default=""),
-                StateField(name="tool_results", type=StateFieldType.DICT, default={})
-            ])
-        
+            fields.extend(
+                [
+                    StateField(name="next_action", type=StateFieldType.STRING, default=""),
+                    StateField(name="tool_results", type=StateFieldType.DICT, default={}),
+                ]
+            )
+
         elif pattern.pattern_type == PatternType.PLAN_EXECUTE:
-            fields.extend([
-                StateField(name="plan", type=StateFieldType.LIST_STR, default=[]),
-                StateField(name="current_step", type=StateFieldType.INT, default=0),
-                StateField(name="execution_results", type=StateFieldType.LIST_STR, default=[]),
-                StateField(name="need_replan", type=StateFieldType.BOOL, default=False)
-            ])
-        
+            fields.extend(
+                [
+                    StateField(name="plan", type=StateFieldType.LIST_STR, default=[]),
+                    StateField(name="current_step", type=StateFieldType.INT, default=0),
+                    StateField(name="execution_results", type=StateFieldType.LIST_STR, default=[]),
+                    StateField(name="need_replan", type=StateFieldType.BOOL, default=False),
+                ]
+            )
+
         return fields
-    
+
     def _get_rag_state_fields(self) -> List[StateField]:
         """Get RAG-specific state fields."""
         return [
@@ -218,87 +236,78 @@ class GraphDesigner:
                 name="retrieved_docs",
                 type=StateFieldType.LIST_STR,
                 description="检索到的文档",
-                default=[]
+                default=[],
             ),
             StateField(
-                name="context",
-                type=StateFieldType.STRING,
-                description="RAG上下文",
-                default=""
+                name="context", type=StateFieldType.STRING, description="RAG上下文", default=""
             ),
             # 🆕 v7.2: LLM 语义路由字段
             StateField(
                 name="router_decision",
                 type=StateFieldType.OPTIONAL_STR,
                 description="路由决策结果: 'SEARCH' 或 'CHAT'",
-                default=None
-            )
+                default=None,
+            ),
         ]
-    
+
     # ==================== Step 3: Nodes & Edges Design ====================
-    
+
     async def design_nodes_and_edges(
         self,
         project_meta: ProjectMeta,
         pattern: PatternConfig,
         state_schema: StateSchema,
         tools_config: Optional[ToolsConfig] = None,
-        rag_config: Optional[RAGConfig] = None
+        rag_config: Optional[RAGConfig] = None,
     ) -> GraphStructure:
         """Step 3: Design nodes and edges.
-        
+
         Args:
             project_meta: Project metadata
             pattern: Selected pattern
             state_schema: State schema
             tools_config: Optional tools configuration
             rag_config: Optional RAG configuration
-            
+
         Returns:
             GraphStructure
         """
         # Get base structure from pattern template
         template = self.pattern_templates.get(pattern.pattern_type, {})
-        
+
         nodes = self._create_nodes_from_template(template, pattern)
         edges = self._create_edges_from_template(template)
         conditional_edges = self._create_conditional_edges_from_template(template, pattern)
-        
+
         # Add RAG node if needed (Router Pattern)
         if project_meta.has_rag and rag_config:
             rag_nodes, rag_edges, rag_cond_edges = self._add_rag_integration(nodes, rag_config)
             nodes.extend(rag_nodes)  # 🆕 v7.2: 添加 Router 和 RAG 节点
             edges.extend(rag_edges)
             conditional_edges.extend(rag_cond_edges)
-        
+
         # Add tool nodes if needed
         if tools_config and tools_config.enabled_tools:
-            tool_nodes, tool_edges = self._add_tool_integration(
-                nodes, tools_config, pattern
-            )
+            tool_nodes, tool_edges = self._add_tool_integration(nodes, tools_config, pattern)
             nodes.extend(tool_nodes)
             edges.extend(tool_edges)
-            
+
             # Update conditional edges for tools
             if pattern.pattern_type == PatternType.SUPERVISOR:
-                conditional_edges = self._update_supervisor_edges(
-                    conditional_edges, tools_config
-                )
+                conditional_edges = self._update_supervisor_edges(conditional_edges, tools_config)
             # 🔗 Fix Sequential Pattern Routing
             elif pattern.pattern_type == PatternType.SEQUENTIAL:
-                 conditional_edges = self._resolve_tools_placeholder(
-                    conditional_edges, tools_config
-                 )
-            
+                conditional_edges = self._resolve_tools_placeholder(conditional_edges, tools_config)
+
             # 🔗 Fix Plan-Execute Pattern Routing (Executor -> Tools)
             # We need to ADD a conditional edge from executor -> tools if it doesn't exist?
             # Or assume Executor has it?
             # Plan-Execute template usually doesn't have default cond edge for tools.
             # We must injecting it dynamically here.
             elif pattern.pattern_type == PatternType.PLAN_EXECUTE:
-                 conditional_edges = self._inject_executor_tool_routing(
+                conditional_edges = self._inject_executor_tool_routing(
                     conditional_edges, tools_config
-                 )
+                )
         else:
             # 🆕 No tools - clean up any tool-related conditional edges
             # Remove branches pointing to 'tools' placeholder
@@ -307,140 +316,136 @@ class GraphDesigner:
                 for key, target in edge.branches.items():
                     if target == "tools":
                         branches_to_remove.append(key)
-                
+
                 for key in branches_to_remove:
                     del edge.branches[key]
-        
+
         # 🆕 v7.2: 如果有 RAG,Entry Point 应该是 intent_router
         entry_point = template.get("entry_point", nodes[0].id if nodes else "agent")
         if project_meta.has_rag and rag_config:
             # 检查是否有 intent_router 节点
             if any(n.id == "intent_router" for n in nodes):
                 entry_point = "intent_router"
-        
+
         return GraphStructure(
             pattern=pattern,
             state_schema=state_schema,
             nodes=nodes,
             edges=edges,
             conditional_edges=conditional_edges,
-            entry_point=entry_point
+            entry_point=entry_point,
         )
-    
+
         return nodes
-    
+
     def _create_nodes_from_template(
-        self,
-        template: Dict[str, Any],
-        pattern: PatternConfig
+        self, template: Dict[str, Any], pattern: PatternConfig
     ) -> List[NodeDef]:
         """Create nodes from pattern template."""
         nodes = []
         default_nodes = template.get("default_nodes", [])
         print(f"🔍 [GraphDesigner] Template nodes for {pattern.pattern_type}: {default_nodes}")
-        
+
         # 🔗 Fallback for Sequential Pattern (if template empty)
         if not default_nodes and pattern.pattern_type == PatternType.SEQUENTIAL:
             print("🔧 [GraphDesigner] Using hardcoded fallback for Sequential Nodes")
-            default_nodes = [{
-                "id": "agent",
-                "type": "llm",
-                "role_description": "Primary Agent",
-                "config": {}
-            }]
-            
+            default_nodes = [
+                {"id": "agent", "type": "llm", "role_description": "Primary Agent", "config": {}}
+            ]
+
         # 🔗 Fallback for Plan-Execute Pattern
         elif not default_nodes and pattern.pattern_type == PatternType.PLAN_EXECUTE:
             print("🔧 [GraphDesigner] Using hardcoded fallback for Plan-Execute Nodes")
             default_nodes = [
                 {"id": "planner", "type": "llm", "role_description": "Planner"},
                 {"id": "executor", "type": "llm", "role_description": "Executor"},
-                {"id": "replanner", "type": "llm", "role_description": "Replanner"}
+                {"id": "replanner", "type": "llm", "role_description": "Replanner"},
             ]
-        
+
         for node_def in default_nodes:
-            nodes.append(NodeDef(
-                id=node_def["id"],
-                type=node_def["type"],
-                role_description=node_def.get("role_description"),
-                config=node_def.get("config")
-            ))
-        
+            nodes.append(
+                NodeDef(
+                    id=node_def["id"],
+                    type=node_def["type"],
+                    role_description=node_def.get("role_description"),
+                    config=node_def.get("config"),
+                )
+            )
+
         return nodes
-    
+
     def _create_edges_from_template(self, template: Dict[str, Any]) -> List[EdgeDef]:
         """Create edges from pattern template."""
         edges = []
         default_edges = template.get("default_edges", [])
-        
+
         for edge_def in default_edges:
-            edges.append(EdgeDef(
-                source=edge_def["source"],
-                target=edge_def["target"]
-            ))
-        
+            edges.append(EdgeDef(source=edge_def["source"], target=edge_def["target"]))
+
         return edges
 
     def _create_conditional_edges_from_template(
-        self,
-        template: Dict[str, Any],
-        pattern: PatternConfig
+        self, template: Dict[str, Any], pattern: PatternConfig
     ) -> List[ConditionalEdgeDef]:
         """Create conditional edges from pattern template."""
         conditional_edges = []
         default_cond_edges = template.get("default_conditional_edges", [])
-        
+
         # 🔗 Fallback for Sequential Pattern
         if not default_cond_edges and pattern.pattern_type == PatternType.SEQUENTIAL:
             print("🔧 [GraphDesigner] Using hardcoded fallback for Sequential Conditional Edges")
-            default_cond_edges = [{
-                "source": "agent",
-                "condition": "should_continue",
-                # ✅ Fixed: Correct logic to check tool_calls and return tool name
-                "condition_logic": """
+            default_cond_edges = [
+                {
+                    "source": "agent",
+                    "condition": "should_continue",
+                    # ✅ Fixed: Correct logic to check tool_calls and return tool name
+                    "condition_logic": """
 last_msg = state.get("messages", [])[-1] if state.get("messages") else None
 if last_msg and hasattr(last_msg, "tool_calls") and last_msg.tool_calls:
     return last_msg.tool_calls[0]["name"]
 return "end"
 """,
-                "branches": {
-                    "continue": "tools", # Placeholder, replaced by _resolve_tools_placeholder
-                    "end": "END"
+                    "branches": {
+                        "continue": "tools",  # Placeholder, replaced by _resolve_tools_placeholder
+                        "end": "END",
+                    },
                 }
-            }]
+            ]
 
         # 🔗 Fallback for Plan-Execute Pattern
         elif not default_cond_edges and pattern.pattern_type == PatternType.PLAN_EXECUTE:
-             print("🔧 [GraphDesigner] Using hardcoded fallback for Plan-Execute Conditional Edges")
-             default_cond_edges = [{
-                 "source": "replanner",
-                 "condition": "should_end_or_replan",
-                 "condition_logic": "return 'end' if state.get('is_finished') else 'continue'",
-                 "branches": {"end": "END", "continue": "executor"}
-             }]
+            print("🔧 [GraphDesigner] Using hardcoded fallback for Plan-Execute Conditional Edges")
+            default_cond_edges = [
+                {
+                    "source": "replanner",
+                    "condition": "should_end_or_replan",
+                    "condition_logic": "return 'end' if state.get('is_finished') else 'continue'",
+                    "branches": {"end": "END", "continue": "executor"},
+                }
+            ]
 
         for edge_def in default_cond_edges:
-            conditional_edges.append(ConditionalEdgeDef(
-                source=edge_def["source"],
-                condition=edge_def["condition"],
-                condition_logic=edge_def.get("condition_logic"),
-                branches=edge_def["branches"]
-            ))
-        
+            conditional_edges.append(
+                ConditionalEdgeDef(
+                    source=edge_def["source"],
+                    condition=edge_def["condition"],
+                    condition_logic=edge_def.get("condition_logic"),
+                    branches=edge_def["branches"],
+                )
+            )
+
         return conditional_edges
-    
+
     def _add_rag_integration(
-        self,
-        existing_nodes: List[NodeDef],
-        rag_config: RAGConfig
+        self, existing_nodes: List[NodeDef], rag_config: RAGConfig
     ) -> tuple[List[NodeDef], List[EdgeDef], List[ConditionalEdgeDef]]:
         """Add RAG node with LLM-based Intent Router Pattern (v7.2).
-        
+
         New Flow:
         - START -> intent_router (LLM分类)
         - intent_router -> [SEARCH: rag_retriever | CHAT: agent]
         - rag_retriever -> agent -> END
-        
+
         Returns:
             Tuple of (new_nodes, edges, conditional_edges)
         """
@@ -460,9 +465,9 @@ return "end"
 - "具体步骤?" -> SEARCH  
 - "你好" -> CHAT
 - "谢谢" -> CHAT""",
-            config={"is_router": True}  # 标记为路由节点
+            config={"is_router": True},  # 标记为路由节点
         )
-        
+
         # 2. 创建 RAG 检索节点
         rag_node = NodeDef(
             id="rag_retriever",
@@ -471,31 +476,25 @@ return "end"
             config={
                 "splitter": rag_config.splitter,
                 "chunk_size": rag_config.chunk_size,
-                "k_retrieval": rag_config.k_retrieval
-            }
+                "k_retrieval": rag_config.k_retrieval,
+            },
         )
-        
+
         # 找到主 Agent 节点
         llm_nodes = [n for n in existing_nodes if n.type == "llm"]
         if not llm_nodes:
             return [router_node, rag_node], [], []
-        
+
         agent_id = llm_nodes[0].id
-        
+
         # 3. 构建边
         edges = [
             EdgeDef(
-                source="rag_retriever",
-                target=agent_id,
-                description="RAG 检索完成后返回 Agent"
+                source="rag_retriever", target=agent_id, description="RAG 检索完成后返回 Agent"
             ),
-            EdgeDef(
-                source=agent_id,
-                target="END",
-                description="Agent 回答后结束"
-            )
+            EdgeDef(source=agent_id, target="END", description="Agent 回答后结束"),
         ]
-        
+
         # 4. Router 的条件边 (基于 LLM 输出)
         conditional_edges = [
             ConditionalEdgeDef(
@@ -523,64 +522,49 @@ if "SEARCH" in decision:
 else:
     return "chat"
 """,
-                branches={
-                    "search": "rag_retriever",  # 需要检索
-                    "chat": agent_id             # 直接对话
-                }
+                branches={"search": "rag_retriever", "chat": agent_id},  # 需要检索  # 直接对话
             )
         ]
-        
+
         # 返回新节点列表、边、条件边
         return [router_node, rag_node], edges, conditional_edges
 
-    
     def _add_tool_integration(
-        self,
-        existing_nodes: List[NodeDef],
-        tools_config: ToolsConfig,
-        pattern: PatternConfig
+        self, existing_nodes: List[NodeDef], tools_config: ToolsConfig, pattern: PatternConfig
     ) -> tuple[List[NodeDef], List[EdgeDef]]:
         """Add tool nodes and edges."""
         tool_nodes = []
         tool_edges = []
-        
+
         for tool_name in tools_config.enabled_tools:
             tool_node = NodeDef(
                 id=f"tool_{tool_name}",
                 type="tool",
                 role_description=f"执行{tool_name}工具",
-                config={"tool_name": tool_name}
+                config={"tool_name": tool_name},
             )
             tool_nodes.append(tool_node)
-            
+
             # Logic for Return Edges
-            
+
             # 1. Sequential: Tool -> Agent
             if pattern.pattern_type == PatternType.SEQUENTIAL:
                 agent_nodes = [n for n in existing_nodes if n.type == "llm"]
                 if agent_nodes:
-                    tool_edges.append(EdgeDef(
-                        source=f"tool_{tool_name}",
-                        target=agent_nodes[0].id
-                    ))
-            
+                    tool_edges.append(EdgeDef(source=f"tool_{tool_name}", target=agent_nodes[0].id))
+
             # 2. Plan-Execute: Tool -> Executor
             elif pattern.pattern_type == PatternType.PLAN_EXECUTE:
                 # Tools used by executor should return execution result to executor
-                tool_edges.append(EdgeDef(
-                    source=f"tool_{tool_name}",
-                    target="executor"
-                ))
-            
+                tool_edges.append(EdgeDef(source=f"tool_{tool_name}", target="executor"))
+
             # 3. Supervisor: Tool output handled by graph state or specific worker logic
             # (Usually Supervisor pattern uses workers that call tools)
-                
+
         return tool_nodes, tool_edges
-    
+
     def _update_supervisor_edges(
-        self,
-        conditional_edges: List[ConditionalEdgeDef],
-        tools_config: ToolsConfig
+        self, conditional_edges: List[ConditionalEdgeDef], tools_config: ToolsConfig
     ) -> List[ConditionalEdgeDef]:
         """Update supervisor conditional edges with tool branches."""
         # Find supervisor routing edge
@@ -589,16 +573,14 @@ else:
                 # Add tool branches
                 for tool_name in tools_config.enabled_tools:
                     edge.branches[tool_name] = f"tool_{tool_name}"
-        
+
         return conditional_edges
 
     def _resolve_tools_placeholder(
-        self,
-        conditional_edges: List[ConditionalEdgeDef],
-        tools_config: ToolsConfig
+        self, conditional_edges: List[ConditionalEdgeDef], tools_config: ToolsConfig
     ) -> List[ConditionalEdgeDef]:
         """Resolve 'tools' placeholder in conditional edges for Sequential pattern.
-        
+
         Replaces:
             branches={"continue": "tools"}
         With:
@@ -606,7 +588,7 @@ else:
                 "tool_a": "tool_tool_a",
                 "tool_b": "tool_tool_b"
             }
-        
+
         And updates condition logic to return tool name.
         """
         for edge in conditional_edges:
@@ -616,22 +598,22 @@ else:
                 if target == "tools":
                     placeholder_key = key
                     break
-            
+
             if placeholder_key:
                 # Remove placeholder
                 del edge.branches[placeholder_key]
-                
+
                 # Add actual tool nodes
                 for tool_name in tools_config.enabled_tools:
                     # branch key = tool_name (what logic returns)
                     # branch target = node_id (where to go)
                     edge.branches[tool_name] = f"tool_{tool_name}"
-                
+
                 # Update condition logic description to reflect this
                 # (Actual logic generation happens in Compiler, this is for graph structure validity)
                 if not edge.condition_logic or "tools" in edge.condition_logic:
                     # Generic logic description
-                     edge.condition_logic = f"""
+                    edge.condition_logic = f"""
 # Tool Routing Logic
 # Returns the name of the tool to call
 
@@ -643,43 +625,41 @@ return "end"
         return conditional_edges
 
     def _inject_executor_tool_routing(
-        self, 
-        conditional_edges: List[ConditionalEdgeDef],
-        tools_config: ToolsConfig
+        self, conditional_edges: List[ConditionalEdgeDef], tools_config: ToolsConfig
     ) -> List[ConditionalEdgeDef]:
         """Inject conditional edge from Executor to Tools for Plan-Execute."""
-        
+
         # Check if we already have an edge from executor
         has_exec_edge = any(e.source == "executor" for e in conditional_edges)
-        
+
         if not has_exec_edge:
-             branches = {}
-             # Add all tools
-             for tool_name in tools_config.enabled_tools:
-                 branches[tool_name] = f"tool_{tool_name}"
-             
-             # Add fallback to evaluator (if no tool needed)
-             branches["evaluator"] = "evaluator"
-             
-             new_edge = ConditionalEdgeDef(
-                 source="executor",
-                 condition="execute_step",
-                 condition_logic="""
+            branches = {}
+            # Add all tools
+            for tool_name in tools_config.enabled_tools:
+                branches[tool_name] = f"tool_{tool_name}"
+
+            # Add fallback to evaluator (if no tool needed)
+            branches["evaluator"] = "evaluator"
+
+            new_edge = ConditionalEdgeDef(
+                source="executor",
+                condition="execute_step",
+                condition_logic="""
 # Executor Routing
 last_msg = state["messages"][-1]
 if hasattr(last_msg, "tool_calls") and last_msg.tool_calls:
     return last_msg.tool_calls[0]["name"]
 return "evaluator"
 """,
-                 branches=branches
-             )
-             conditional_edges.append(new_edge)
-             print(f"🔧 [GraphDesigner] Injected Executor -> Tools routing edge")
-             
+                branches=branches,
+            )
+            conditional_edges.append(new_edge)
+            print(f"🔧 [GraphDesigner] Injected Executor -> Tools routing edge")
+
         return conditional_edges
 
     # ==================== Main Entry Point ====================
-    
+
     async def design_graph(
         self,
         project_meta: ProjectMeta,
@@ -687,98 +667,96 @@ return "evaluator"
         rag_config: Optional[RAGConfig] = None,
     ) -> GraphStructure:
         """Design graph structure using three-step method.
-        
+
         This is the main entry point that orchestrates the three steps.
-        
+
         Args:
             project_meta: Project metadata
             tools_config: Optional tools configuration
             rag_config: Optional RAG configuration
-            
+
         Returns:
             GraphStructure
         """
         # Step 1: Select Pattern
         pattern = await self.select_pattern(project_meta)
-        
+
         # Step 2: Define State
         state_schema = await self.define_state_schema(project_meta, pattern)
-        
+
         # Step 3: Design Nodes & Edges
         graph = await self.design_nodes_and_edges(
             project_meta, pattern, state_schema, tools_config, rag_config
         )
-        
+
         # 🆕 v8.0: Interface Guard - 验证工具参数
         if tools_config and tools_config.enabled_tools:
             await self._validate_tool_parameters(tools_config)
-        
+
         return graph
-    
+
     async def _validate_tool_parameters(self, tools_config: ToolsConfig) -> None:
         """验证工具参数 Schema (v8.0 Interface Guard)
-        
+
         Args:
             tools_config: 工具配置
         """
         from .interface_guard import InterfaceGuard
         from ..tools import get_global_registry
-        
+
         print("🛡️ [Interface Guard] 开始验证工具参数...")
-        
+
         guard = InterfaceGuard(self.builder, max_retries=3)
         registry = get_global_registry()
-        
+
         for tool_name in tools_config.enabled_tools:
             metadata = registry.get_metadata(tool_name)
-            
+
             if not metadata:
                 print(f"⚠️ [Interface Guard] 工具 {tool_name} 未在注册表中找到")
                 continue
-            
+
             if not metadata.openapi_schema:
                 print(f"⚠️ [Interface Guard] 工具 {tool_name} 缺少 openapi_schema")
                 continue
-            
+
             # 生成示例参数进行验证
             sample_args = self._generate_sample_args(tool_name, metadata)
-            
+
             # 同步验证 (不进行自动修复)
-            is_valid, errors = guard.validate_sync(
-                tool_name, sample_args, metadata.openapi_schema
-            )
-            
+            is_valid, errors = guard.validate_sync(tool_name, sample_args, metadata.openapi_schema)
+
             if is_valid:
                 print(f"✅ [Interface Guard] 工具 {tool_name} 参数验证通过")
             else:
                 print(f"⚠️ [Interface Guard] 工具 {tool_name} 参数验证失败:")
                 for error in errors:
                     print(f"   - {error.error_message}")
-    
+
     def _generate_sample_args(self, tool_name: str, metadata) -> Dict[str, Any]:
         """生成工具的示例参数用于验证
-        
+
         Args:
             tool_name: 工具名称
             metadata: 工具元数据
-            
+
         Returns:
             示例参数字典
         """
         # 如果有示例,使用第一个示例
         if metadata.examples and len(metadata.examples) > 0:
             return metadata.examples[0]
-        
+
         # 否则根据 Schema 生成默认参数
         schema = metadata.openapi_schema
         sample_args = {}
-        
+
         properties = schema.get("properties", {})
         required = schema.get("required", [])
-        
+
         for field_name, field_schema in properties.items():
             field_type = field_schema.get("type", "string")
-            
+
             # 只为必填字段生成默认值
             if field_name in required:
                 if field_type == "string":
@@ -793,39 +771,39 @@ return "evaluator"
                     sample_args[field_name] = []
                 elif field_type == "object":
                     sample_args[field_name] = {}
-        
+
         return sample_args
-    
+
     # ==================== Utility Methods ====================
-    
+
     def save_graph(self, graph: GraphStructure, output_path) -> None:
         """Save graph structure to JSON file."""
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        with open(output_path, 'w', encoding='utf-8') as f:
+
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(graph.model_dump_json(indent=2))
-    
+
     def load_graph(self, input_path) -> GraphStructure:
         """Load graph structure from JSON file."""
         input_path = Path(input_path)
-        
-        with open(input_path, 'r', encoding='utf-8') as f:
+
+        with open(input_path, "r", encoding="utf-8") as f:
             return GraphStructure.model_validate_json(f.read())
 
     async def fix_logic(
         self,
         current_graph: GraphStructure,
         simulation_result: Optional[SimulationResult] = None,
-        feedback: Optional[str] = None
+        feedback: Optional[str] = None,
     ) -> GraphStructure:
         """根据仿真结果或反馈修复图结构
-        
+
         Args:
             current_graph: 当前图结构
             simulation_result: 仿真结果 (可选)
             feedback: 文本反馈 (可选)
-            
+
         Returns:
             修复后的图结构
         """
@@ -837,13 +815,13 @@ return "evaluator"
                 issues_desc += f"- [{issue.severity}] {issue.issue_type}: {issue.description}\n"
                 if issue.suggestion:
                     issues_desc += f"  Suggestion: {issue.suggestion}\n"
-        
+
         if feedback:
             issues_desc += f"\nExternal Feedback:\n{feedback}\n"
-            
+
         if not issues_desc:
             return current_graph
-            
+
         prompt = f"""# Graph Repair Task
 
 ## Current Graph
@@ -883,42 +861,42 @@ Add iteration counters with max limits for any loops.
 
 Return the full updated GraphStructure JSON.
 """
-        
+
         # 调用 LLM 修复
         response = await self.builder.call(prompt, schema=GraphStructure)
-        
+
         # 🔧 后处理: 统一特殊节点为 "END"
         if isinstance(response, dict):
             response = self._normalize_special_nodes(response)
             return GraphStructure(**response)
         return response
-    
+
     def _normalize_special_nodes(self, graph_dict: dict) -> dict:
         """将所有特殊节点名统一为 'END'
-        
+
         LLM 可能生成 '__end__', 'end', '__END__' 等变体,
         统一转换为 LangGraph 标准的 'END'
-        
+
         Args:
             graph_dict: Graph 字典
-            
+
         Returns:
             规范化后的 Graph 字典
         """
-        END_VARIANTS = ['__end__', 'end', '__END__', '_end_', 'End', '__end', 'end__']
-        
+        END_VARIANTS = ["__end__", "end", "__END__", "_end_", "End", "__end", "end__"]
+
         # 处理 conditional_edges
-        for edge in graph_dict.get('conditional_edges', []):
-            branches = edge.get('branches', {})
+        for edge in graph_dict.get("conditional_edges", []):
+            branches = edge.get("branches", {})
             for key, value in list(branches.items()):
                 if value in END_VARIANTS:
                     branches[key] = "END"
                     print(f"🔧 [GraphDesigner] 规范化节点: '{value}' → 'END'")
-        
+
         # 处理 regular edges
-        for edge in graph_dict.get('edges', []):
-            if edge.get('target') in END_VARIANTS:
+        for edge in graph_dict.get("edges", []):
+            if edge.get("target") in END_VARIANTS:
                 print(f"🔧 [GraphDesigner] 规范化节点: '{edge['target']}' → 'END'")
-                edge['target'] = "END"
-        
+                edge["target"] = "END"
+
         return graph_dict

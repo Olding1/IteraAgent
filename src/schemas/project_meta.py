@@ -17,10 +17,10 @@ class TaskType(str, Enum):
 
 class ExecutionStep(BaseModel):
     """Execution plan step.
-    
+
     Represents a single step in the hierarchical task breakdown.
     """
-    
+
     step: int = Field(..., description="Step number")
     role: str = Field(..., description="Role name (Architect/Coder/Tester/etc)")
     goal: str = Field(..., description="Step goal")
@@ -29,29 +29,25 @@ class ExecutionStep(BaseModel):
 
 class ProjectMeta(BaseModel):
     """PM node output - project metadata.
-    
+
     This schema defines the core information about an agent project,
     including its purpose, capabilities, and requirements.
     """
 
-    agent_name: str = Field(
-        ..., description="Agent name", min_length=1, max_length=50
-    )
+    agent_name: str = Field(..., description="Agent name", min_length=1, max_length=50)
     description: str = Field(..., description="Agent functionality description")
     has_rag: bool = Field(default=False, description="Whether RAG is needed")
     task_type: TaskType = Field(default=TaskType.CHAT, description="Task type")
     language: str = Field(default="zh-CN", description="Primary language")
     user_intent_summary: str = Field(..., description="User intent summary")
-    file_paths: Optional[List[str]] = Field(
-        default=None, description="User uploaded file paths"
-    )
+    file_paths: Optional[List[str]] = Field(default=None, description="User uploaded file paths")
     clarification_needed: bool = Field(
         default=False, description="Whether further clarification is needed"
     )
     clarification_questions: Optional[List[str]] = Field(
         default=None, description="List of clarification questions"
     )
-    
+
     # New fields for PM dual-brain mode
     status: Literal["clarifying", "ready"] = Field(
         default="ready", description="PM analysis status"
@@ -62,11 +58,9 @@ class ProjectMeta(BaseModel):
     execution_plan: Optional[List[ExecutionStep]] = Field(
         default=None, description="Hierarchical task breakdown"
     )
-    
+
     # 🆕 v7.4: Inference mode fields
-    confidence: float = Field(
-        default=1.0, ge=0.0, le=1.0, description="Inference confidence score"
-    )
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Inference confidence score")
     missing_info: List[str] = Field(
         default_factory=list, description="List of missing critical information"
     )
@@ -82,5 +76,5 @@ class ProjectMeta(BaseModel):
                 "language": "zh-CN",
                 "user_intent_summary": "User wants to build a stock query assistant",
             }
-        }
+        },
     )

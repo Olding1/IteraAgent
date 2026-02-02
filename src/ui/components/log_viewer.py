@@ -12,6 +12,7 @@ from enum import Enum
 
 class LogLevel(Enum):
     """日志级别"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -41,9 +42,9 @@ class LogViewer:
         self.max_logs = max_logs
 
         # 初始化 session_state
-        if 'log_history' not in st.session_state:
+        if "log_history" not in st.session_state:
             st.session_state.log_history = []
-        if 'log_filter' not in st.session_state:
+        if "log_filter" not in st.session_state:
             st.session_state.log_filter = None
 
     def append_log(self, message: str, level: LogLevel = LogLevel.INFO):
@@ -56,18 +57,14 @@ class LogViewer:
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
 
-        log_entry = {
-            "timestamp": timestamp,
-            "level": level,
-            "message": message
-        }
+        log_entry = {"timestamp": timestamp, "level": level, "message": message}
 
         # 添加到历史记录
         st.session_state.log_history.append(log_entry)
 
         # 限制日志数量
         if len(st.session_state.log_history) > self.max_logs:
-            st.session_state.log_history = st.session_state.log_history[-self.max_logs:]
+            st.session_state.log_history = st.session_state.log_history[-self.max_logs :]
 
     def clear_logs(self):
         """清空日志"""
@@ -113,9 +110,7 @@ class LogViewer:
             with col1:
                 filter_options = ["全部"] + [level.value for level in LogLevel]
                 selected_filter = st.selectbox(
-                    "日志级别过滤",
-                    filter_options,
-                    key="log_level_filter"
+                    "日志级别过滤", filter_options, key="log_level_filter"
                 )
                 st.session_state.log_filter = None if selected_filter == "全部" else selected_filter
 
@@ -131,7 +126,8 @@ class LogViewer:
         filtered_logs = st.session_state.log_history
         if st.session_state.log_filter:
             filtered_logs = [
-                log for log in st.session_state.log_history
+                log
+                for log in st.session_state.log_history
                 if log["level"].value == st.session_state.log_filter
             ]
 
@@ -159,7 +155,8 @@ class LogViewer:
             """
 
             # 自动滚动脚本
-            scroll_script = """
+            scroll_script = (
+                """
             <script>
                 // 等待 DOM 加载完成
                 setTimeout(function() {
@@ -169,7 +166,10 @@ class LogViewer:
                     }
                 }, 100);
             </script>
-            """ if auto_scroll else ""
+            """
+                if auto_scroll
+                else ""
+            )
 
             st.markdown(container_style + scroll_script, unsafe_allow_html=True)
 
@@ -208,34 +208,34 @@ def create_log_viewer(max_logs: int = 1000) -> LogViewer:
 
 def log_info(message: str):
     """记录 INFO 级别日志"""
-    if 'log_viewer' not in st.session_state:
+    if "log_viewer" not in st.session_state:
         st.session_state.log_viewer = LogViewer()
     st.session_state.log_viewer.append_log(message, LogLevel.INFO)
 
 
 def log_warning(message: str):
     """记录 WARNING 级别日志"""
-    if 'log_viewer' not in st.session_state:
+    if "log_viewer" not in st.session_state:
         st.session_state.log_viewer = LogViewer()
     st.session_state.log_viewer.append_log(message, LogLevel.WARNING)
 
 
 def log_error(message: str):
     """记录 ERROR 级别日志"""
-    if 'log_viewer' not in st.session_state:
+    if "log_viewer" not in st.session_state:
         st.session_state.log_viewer = LogViewer()
     st.session_state.log_viewer.append_log(message, LogLevel.ERROR)
 
 
 def log_success(message: str):
     """记录 SUCCESS 级别日志"""
-    if 'log_viewer' not in st.session_state:
+    if "log_viewer" not in st.session_state:
         st.session_state.log_viewer = LogViewer()
     st.session_state.log_viewer.append_log(message, LogLevel.SUCCESS)
 
 
 def log_debug(message: str):
     """记录 DEBUG 级别日志"""
-    if 'log_viewer' not in st.session_state:
+    if "log_viewer" not in st.session_state:
         st.session_state.log_viewer = LogViewer()
     st.session_state.log_viewer.append_log(message, LogLevel.DEBUG)
