@@ -19,6 +19,8 @@ jobs:
       with:
         # 确保 Git 使用 LF 换行符
         autocrlf: false
+        # 清除本地修改，确保使用仓库中的文件
+        clean: true
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
