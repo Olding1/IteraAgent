@@ -1,11 +1,12 @@
 """
 快速测试脚本 - 验证 RAG 路由修复
 """
+
 import os
 import sys
 
 # 切换到 Agent 目录
-os.chdir('agents/AgentZeroDocAssistant')
+os.chdir("agents/AgentZeroDocAssistant")
 
 from agent import run_agent
 
@@ -36,13 +37,14 @@ if rag_steps:
         print(f"      - 查询: {step.get('query', 'N/A')[:50]}...")
         print(f"      - 检索文档数: {step.get('num_docs', 0)}")
         print(f"      - 文档文件: {step.get('docs_file', 'N/A')}")
-        
+
         # 尝试加载文档
-        docs_file = step.get('docs_file')
+        docs_file = step.get("docs_file")
         if docs_file:
             import json
+
             try:
-                with open(docs_file, 'r', encoding='utf-8') as f:
+                with open(docs_file, "r", encoding="utf-8") as f:
                     docs = json.load(f)
                 print(f"      - 文档内容预览:")
                 for j, doc in enumerate(docs[:2], 1):
@@ -53,6 +55,8 @@ else:
     print(f"\n❌ RAG 节点未被调用!")
     print("\n所有步骤:")
     for step in trace:
-        print(f"   - 步骤 {step['step']}: {step.get('action', 'unknown')} ({step.get('node_id', 'unknown')})")
+        print(
+            f"   - 步骤 {step['step']}: {step.get('action', 'unknown')} ({step.get('node_id', 'unknown')})"
+        )
 
 print("\n" + "=" * 60)

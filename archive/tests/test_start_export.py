@@ -19,6 +19,7 @@ print("\n【测试 1】检查导出模块...")
 try:
     from src.exporters import export_to_dify, validate_for_dify
     from src.utils.readme_generator import generate_readme
+
     print("✅ 导出模块导入成功")
 except ImportError as e:
     print(f"❌ 导出模块导入失败: {e}")
@@ -27,7 +28,7 @@ except ImportError as e:
 print("\n【测试 2】检查 agents 目录...")
 agents_dir = Path("agents")
 if agents_dir.exists():
-    agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+    agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
     print(f"✅ agents 目录存在，包含 {len(agents)} 个 Agent")
     for agent in agents:
         print(f"   - {agent.name}")
@@ -38,6 +39,7 @@ else:
 print("\n【测试 3】检查 Streamlit...")
 try:
     import streamlit
+
     print(f"✅ Streamlit 已安装 (版本: {streamlit.__version__})")
 except ImportError:
     print("⚠️  Streamlit 未安装")

@@ -7,7 +7,9 @@ Agent Zero Phase 5 - Streamlit UI 演示应用
 import streamlit as st
 from pathlib import Path
 from src.ui.components import (
-    log_info, log_success, log_error,
+    log_info,
+    log_success,
+    log_error,
     visualize_graph,
     show_token_stats,
 )
@@ -16,16 +18,12 @@ from src.exporters import export_to_dify, validate_for_dify
 from src.utils.readme_generator import generate_readme
 
 # 页面配置
-st.set_page_config(
-    page_title="Agent Zero - Phase 5 Demo",
-    page_icon="🤖",
-    layout="wide"
-)
+st.set_page_config(page_title="Agent Zero - Phase 5 Demo", page_icon="🤖", layout="wide")
 
 # 初始化 session state
-if 'graph' not in st.session_state:
+if "graph" not in st.session_state:
     st.session_state.graph = None
-if 'export_done' not in st.session_state:
+if "export_done" not in st.session_state:
     st.session_state.export_done = False
 
 # 标题
@@ -54,7 +52,7 @@ with st.sidebar:
         tool_name = st.selectbox(
             "选择工具",
             ["tavily_search", "duckduckgo_search", "wikipedia", "google_search"],
-            help="选择要使用的搜索工具"
+            help="选择要使用的搜索工具",
         )
     else:
         tool_name = "tavily_search"
@@ -87,50 +85,46 @@ tab1, tab2, tab3, tab4 = st.tabs(["📊 Graph 可视化", "📝 日志", "💰 T
 with tab1:
     st.header("📊 Agent Graph 可视化")
 
-    if 'create_agent' in st.session_state and st.session_state.create_agent:
+    if "create_agent" in st.session_state and st.session_state.create_agent:
         # 构建 Graph
         nodes = []
         edges = []
 
         if use_llm:
-            nodes.append(NodeDef(
-                id='agent',
-                type='llm',
-                role_description=f'{agent_name}，负责理解用户需求并提供帮助'
-            ))
+            nodes.append(
+                NodeDef(
+                    id="agent",
+                    type="llm",
+                    role_description=f"{agent_name}，负责理解用户需求并提供帮助",
+                )
+            )
 
         if use_tool:
-            nodes.append(NodeDef(
-                id='search',
-                type='tool',
-                config={'tool_name': tool_name}
-            ))
+            nodes.append(NodeDef(id="search", type="tool", config={"tool_name": tool_name}))
             if use_llm:
-                edges.append(EdgeDef(source='agent', target='search'))
+                edges.append(EdgeDef(source="agent", target="search"))
 
         if use_rag:
-            nodes.append(NodeDef(id='knowledge', type='rag'))
+            nodes.append(NodeDef(id="knowledge", type="rag"))
             if use_tool:
-                edges.append(EdgeDef(source='search', target='knowledge'))
+                edges.append(EdgeDef(source="search", target="knowledge"))
             elif use_llm:
-                edges.append(EdgeDef(source='agent', target='knowledge'))
+                edges.append(EdgeDef(source="agent", target="knowledge"))
 
         # 创建 Graph
         graph = GraphStructure(
             pattern=PatternConfig(
-                pattern_type=pattern_type,
-                description=agent_desc,
-                max_iterations=max_iterations
+                pattern_type=pattern_type, description=agent_desc, max_iterations=max_iterations
             ),
             state_schema=StateSchema(
                 fields=[
-                    StateField(name='messages', type='List[BaseMessage]', description='对话历史'),
-                    StateField(name='user_id', type='str', description='用户ID')
+                    StateField(name="messages", type="List[BaseMessage]", description="对话历史"),
+                    StateField(name="user_id", type="str", description="用户ID"),
                 ]
             ),
             nodes=nodes,
             edges=edges,
-            entry_point='agent' if use_llm else (nodes[0].id if nodes else None)
+            entry_point="agent" if use_llm else (nodes[0].id if nodes else None),
         )
 
         st.session_state.graph = graph
@@ -173,7 +167,7 @@ with tab2:
         if st.button("🧪 模拟执行", use_container_width=True):
             st.session_state.run_simulation = True
 
-    if 'run_simulation' in st.session_state and st.session_state.run_simulation:
+    if "run_simulation" in st.session_state and st.session_state.run_simulation:
         log_info(f"开始构建 Agent: {agent_name}")
         log_info(f"设计模式: {pattern_type}")
         log_success("Graph 结构创建完成")
@@ -202,24 +196,24 @@ with tab3:
         if st.button("📊 显示统计", use_container_width=True):
             st.session_state.show_stats = True
 
-    if 'show_stats' in st.session_state and st.session_state.show_stats:
+    if "show_stats" in st.session_state and st.session_state.show_stats:
         # 模拟 Token 统计数据
         mock_stats = {
-            'total_tokens': 15000,
-            'prompt_tokens': 10000,
-            'completion_tokens': 5000,
-            'total_cost': 0.045,
-            'model_stats': {
-                'gpt-4o': {
-                    'total_tokens': 15000,
-                    'prompt_tokens': 10000,
-                    'completion_tokens': 5000,
-                    'cost': 0.045
+            "total_tokens": 15000,
+            "prompt_tokens": 10000,
+            "completion_tokens": 5000,
+            "total_cost": 0.045,
+            "model_stats": {
+                "gpt-4o": {
+                    "total_tokens": 15000,
+                    "prompt_tokens": 10000,
+                    "completion_tokens": 5000,
+                    "cost": 0.045,
                 }
-            }
+            },
         }
 
-        show_token_stats(mock_stats, mode='full')
+        show_token_stats(mock_stats, mode="full")
         st.session_state.show_stats = False
 
 # Tab 4: 导出
@@ -251,14 +245,14 @@ with tab4:
 
             if st.button("导出 Dify YAML", type="primary", use_container_width=True):
                 try:
-                    output_dir = Path('exports') / agent_name.replace(' ', '_')
+                    output_dir = Path("exports") / agent_name.replace(" ", "_")
                     output_dir.mkdir(parents=True, exist_ok=True)
 
                     # 导出 Dify YAML
                     dify_path = export_to_dify(
                         graph=st.session_state.graph,
                         agent_name=agent_name,
-                        output_path=output_dir / f'{agent_name.replace(" ", "_")}_dify.yml'
+                        output_path=output_dir / f'{agent_name.replace(" ", "_")}_dify.yml',
                     )
 
                     st.success(f"✅ 导出成功: {dify_path}")
@@ -269,20 +263,22 @@ with tab4:
                     st.error(f"❌ 导出失败: {e}")
 
             # 显示导出的文件
-            if st.session_state.export_done and 'dify_path' in st.session_state:
+            if st.session_state.export_done and "dify_path" in st.session_state:
                 dify_path = st.session_state.dify_path
 
                 # 文件信息
-                st.info(f"📄 文件: {dify_path.name}\n\n📊 大小: {dify_path.stat().st_size / 1024:.2f} KB")
+                st.info(
+                    f"📄 文件: {dify_path.name}\n\n📊 大小: {dify_path.stat().st_size / 1024:.2f} KB"
+                )
 
                 # 显示内容
                 with st.expander("📄 查看 YAML 内容"):
-                    with open(dify_path, 'r', encoding='utf-8') as f:
+                    with open(dify_path, "r", encoding="utf-8") as f:
                         yaml_content = f.read()
-                    st.code(yaml_content, language='yaml')
+                    st.code(yaml_content, language="yaml")
 
                 # 下载按钮
-                with open(dify_path, 'r', encoding='utf-8') as f:
+                with open(dify_path, "r", encoding="utf-8") as f:
                     yaml_content = f.read()
 
                 st.download_button(
@@ -290,7 +286,7 @@ with tab4:
                     data=yaml_content,
                     file_name=dify_path.name,
                     mime="text/yaml",
-                    use_container_width=True
+                    use_container_width=True,
                 )
 
         with col2:
@@ -298,15 +294,15 @@ with tab4:
 
             if st.button("生成 README", use_container_width=True):
                 try:
-                    output_dir = Path('exports') / agent_name.replace(' ', '_')
+                    output_dir = Path("exports") / agent_name.replace(" ", "_")
                     output_dir.mkdir(parents=True, exist_ok=True)
 
                     # 生成 README
                     readme_path = generate_readme(
                         agent_name=agent_name,
                         graph=st.session_state.graph,
-                        output_path=output_dir / 'README.md',
-                        test_results={'total': 10, 'passed': 10, 'failed': 0}
+                        output_path=output_dir / "README.md",
+                        test_results={"total": 10, "passed": 10, "failed": 0},
                     )
 
                     st.success(f"✅ README 已生成: {readme_path}")
@@ -316,16 +312,16 @@ with tab4:
                     st.error(f"❌ 生成失败: {e}")
 
             # 显示 README
-            if 'readme_path' in st.session_state:
+            if "readme_path" in st.session_state:
                 readme_path = st.session_state.readme_path
 
                 with st.expander("📄 查看 README"):
-                    with open(readme_path, 'r', encoding='utf-8') as f:
+                    with open(readme_path, "r", encoding="utf-8") as f:
                         readme_content = f.read()
                     st.markdown(readme_content)
 
                 # 下载按钮
-                with open(readme_path, 'r', encoding='utf-8') as f:
+                with open(readme_path, "r", encoding="utf-8") as f:
                     readme_content = f.read()
 
                 st.download_button(
@@ -333,7 +329,7 @@ with tab4:
                     data=readme_content,
                     file_name="README.md",
                     mime="text/markdown",
-                    use_container_width=True
+                    use_container_width=True,
                 )
 
         # 使用说明
@@ -341,7 +337,8 @@ with tab4:
         st.subheader("📖 使用说明")
 
         with st.expander("💡 如何导入到 Dify"):
-            st.markdown("""
+            st.markdown(
+                """
             ### 📋 导入步骤
 
             1. **访问 Dify**
@@ -371,7 +368,8 @@ with tab4:
             - **RAG 节点**: 导出时会被自动跳过，需要在 Dify 中手动添加 Knowledge Retrieval 节点
             - **API Keys**: 确保在 Dify 中配置了所需的 API Keys
             - **工具配置**: 检查工具节点是否在 Dify 中可用
-            """)
+            """
+            )
     else:
         st.info("👈 请先在侧边栏创建 Agent")
 
@@ -384,11 +382,13 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("### 📚 文档")
-    st.markdown("""
+    st.markdown(
+        """
     - [使用总结](PHASE5_USAGE_SUMMARY.md)
     - [集成指南](PHASE5_INTEGRATION_GUIDE.md)
     - [文档索引](PHASE5_DOCUMENTATION_INDEX.md)
-    """)
+    """
+    )
 
 with col2:
     st.markdown("### 🧪 测试")
@@ -397,10 +397,13 @@ with col2:
 
 with col3:
     st.markdown("### 💡 快速 API")
-    st.code("""
+    st.code(
+        """
 from src.exporters import export_to_dify
 export_to_dify(graph, 'MyAgent', 'output.yml')
-    """, language="python")
+    """,
+        language="python",
+    )
 
 # 页脚
 st.markdown("---")
@@ -409,5 +412,5 @@ st.markdown(
     "🤖 Agent Zero v8.0 Phase 5 | "
     "Built with ❤️ using Streamlit"
     "</div>",
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )

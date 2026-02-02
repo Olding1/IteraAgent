@@ -7,12 +7,18 @@ from langchain_community.tools import (
     GoogleSerperRun,
     YahooFinanceNewsTool,
     GoogleTrendsQueryRun,
-    BraveSearch
+    BraveSearch,
 )
-from langchain_community.utilities import OpenWeatherMapAPIWrapper, GoogleSerperAPIWrapper, BraveSearchWrapper
+from langchain_community.utilities import (
+    OpenWeatherMapAPIWrapper,
+    GoogleSerperAPIWrapper,
+    BraveSearchWrapper,
+)
 
 try:
-    from langchain_community.tools.openai_dalle_image_generation.tool import OpenAIDALLEImageGenerationTool
+    from langchain_community.tools.openai_dalle_image_generation.tool import (
+        OpenAIDALLEImageGenerationTool,
+    )
 except ImportError:
     OpenAIDALLEImageGenerationTool = None
 
@@ -24,11 +30,14 @@ tools = [
     SleepTool(),
     GoogleSerperRun(api_wrapper=GoogleSerperAPIWrapper()),
     YahooFinanceNewsTool(),
-    GoogleTrendsQueryRun(api_wrapper=GoogleSerperAPIWrapper()), # Trends often uses Serper or similar wrapper
+    GoogleTrendsQueryRun(
+        api_wrapper=GoogleSerperAPIWrapper()
+    ),  # Trends often uses Serper or similar wrapper
 ]
 
 # Print schemas
 import json
+
 for tool in tools:
     print(f"--- {tool.name} ---")
     print(f"Import: {tool.__class__.__module__}.{tool.__class__.__name__}")

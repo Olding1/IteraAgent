@@ -72,12 +72,8 @@ class TestStateSchema:
                     description="Chat history",
                     reducer="add_messages",
                 ),
-                StateField(
-                    name="iteration_count", type=StateFieldType.INT, default=0
-                ),
-                StateField(
-                    name="is_finished", type=StateFieldType.BOOL, default=False
-                ),
+                StateField(name="iteration_count", type=StateFieldType.INT, default=0),
+                StateField(name="is_finished", type=StateFieldType.BOOL, default=False),
             ]
         )
 
@@ -184,9 +180,7 @@ class TestProjectMetaExtensions:
     def test_project_meta_with_execution_plan(self):
         """Test ProjectMeta with execution plan."""
         plan = [
-            ExecutionStep(
-                step=1, role="Architect", goal="Design system architecture"
-            ),
+            ExecutionStep(step=1, role="Architect", goal="Design system architecture"),
             ExecutionStep(step=2, role="Coder", goal="Implement core logic"),
             ExecutionStep(step=3, role="Tester", goal="Write and run tests"),
         ]
@@ -227,9 +221,7 @@ class TestGraphStructureExtensions:
 
     def test_graph_structure_with_pattern_and_state(self):
         """Test GraphStructure with pattern and state schema."""
-        pattern = PatternConfig(
-            pattern_type=PatternType.REFLECTION, max_iterations=3
-        )
+        pattern = PatternConfig(pattern_type=PatternType.REFLECTION, max_iterations=3)
 
         state_schema = StateSchema(
             fields=[
@@ -237,9 +229,7 @@ class TestGraphStructureExtensions:
                     name="messages", type=StateFieldType.LIST_MESSAGE, reducer="add_messages"
                 ),
                 StateField(name="draft", type=StateFieldType.STRING, default=""),
-                StateField(
-                    name="iteration_count", type=StateFieldType.INT, default=0
-                ),
+                StateField(name="iteration_count", type=StateFieldType.INT, default=0),
             ]
         )
 

@@ -7,6 +7,7 @@ Phase 5 功能使用示例
 import streamlit as st
 from pathlib import Path
 
+
 # 示例 1: 使用日志查看器
 def example_log_viewer():
     """日志查看器示例"""
@@ -15,7 +16,7 @@ def example_log_viewer():
     from src.ui.components import LogViewer, log_info, log_warning, log_error, log_success
 
     # 创建日志查看器
-    if 'log_viewer' not in st.session_state:
+    if "log_viewer" not in st.session_state:
         st.session_state.log_viewer = LogViewer()
 
     # 添加一些示例日志
@@ -52,21 +53,16 @@ def example_graph_visualizer():
     # 创建一个示例 Graph
     graph = GraphStructure(
         pattern=PatternConfig(
-            pattern_type="sequential",
-            description="简单的顺序执行模式",
-            max_iterations=1
+            pattern_type="sequential", description="简单的顺序执行模式", max_iterations=1
         ),
         state_schema=StateSchema(fields=[]),
         nodes=[
             NodeDef(id="agent", type="llm", role_description="主要的 LLM 节点"),
             NodeDef(id="search", type="tool", config={"tool_name": "tavily_search"}),
-            NodeDef(id="rag", type="rag")
+            NodeDef(id="rag", type="rag"),
         ],
-        edges=[
-            EdgeDef(source="agent", target="search"),
-            EdgeDef(source="search", target="rag")
-        ],
-        entry_point="agent"
+        edges=[EdgeDef(source="agent", target="search"), EdgeDef(source="search", target="rag")],
+        entry_point="agent",
     )
 
     # 可视化
@@ -85,7 +81,7 @@ def example_token_stats():
         "total_calls": 15,
         "total_input_tokens": 12500,
         "total_output_tokens": 3800,
-        "total_cost_usd": 0.0725
+        "total_cost_usd": 0.0725,
     }
 
     # 显示统计
@@ -103,26 +99,19 @@ def example_blueprint_review():
     # 创建示例 Graph
     graph = GraphStructure(
         pattern=PatternConfig(
-            pattern_type="reflection",
-            description="带反思的执行模式",
-            max_iterations=3
+            pattern_type="reflection", description="带反思的执行模式", max_iterations=3
         ),
         state_schema=StateSchema(fields=[]),
         nodes=[
             NodeDef(id="agent", type="llm", role_description="主 Agent"),
-            NodeDef(id="reflect", type="llm", role_description="反思节点")
+            NodeDef(id="reflect", type="llm", role_description="反思节点"),
         ],
-        edges=[
-            EdgeDef(source="agent", target="reflect")
-        ],
-        entry_point="agent"
+        edges=[EdgeDef(source="agent", target="reflect")],
+        entry_point="agent",
     )
 
     # 显示审查页面
-    approved, feedback = show_blueprint_review(
-        graph=graph,
-        agent_name="示例 Agent"
-    )
+    approved, feedback = show_blueprint_review(graph=graph, agent_name="示例 Agent")
 
     if approved is not None:
         if approved:
@@ -157,10 +146,7 @@ def example_export():
             # 提供下载
             with open(zip_path, "rb") as f:
                 st.download_button(
-                    label="⬇️ 下载 ZIP",
-                    data=f,
-                    file_name=zip_path.name,
-                    mime="application/zip"
+                    label="⬇️ 下载 ZIP", data=f, file_name=zip_path.name, mime="application/zip"
                 )
         except Exception as e:
             st.error(f"❌ 导出失败: {e}")
@@ -176,19 +162,15 @@ def example_export():
         # 创建示例 Graph
         graph = GraphStructure(
             pattern=PatternConfig(
-                pattern_type="sequential",
-                description="示例 Agent",
-                max_iterations=1
+                pattern_type="sequential", description="示例 Agent", max_iterations=1
             ),
             state_schema=StateSchema(fields=[]),
             nodes=[
                 NodeDef(id="agent", type="llm", role_description="主 Agent"),
-                NodeDef(id="search", type="tool", config={"tool_name": "tavily_search"})
+                NodeDef(id="search", type="tool", config={"tool_name": "tavily_search"}),
             ],
-            edges=[
-                EdgeDef(source="agent", target="search")
-            ],
-            entry_point="agent"
+            edges=[EdgeDef(source="agent", target="search")],
+            entry_point="agent",
         )
 
         # 验证
@@ -217,7 +199,7 @@ def example_export():
                 label="⬇️ 下载 Dify YAML",
                 data=yaml_content,
                 file_name="example_dify.yml",
-                mime="text/yaml"
+                mime="text/yaml",
             )
         except Exception as e:
             st.error(f"❌ 导出失败: {e}")
@@ -227,25 +209,20 @@ def example_export():
 def main():
     st.title("🚀 Agent Zero Phase 5 功能演示")
 
-    st.markdown("""
+    st.markdown(
+        """
     本页面演示 Phase 5 新增的功能：
     - 🎨 UI 组件（日志、图表、统计）
     - 📐 Blueprint Review
     - 📦 导出功能（ZIP、Dify YAML）
-    """)
+    """
+    )
 
     st.divider()
 
     # 选择示例
     example = st.selectbox(
-        "选择示例",
-        [
-            "日志查看器",
-            "Graph 可视化",
-            "Token 统计",
-            "Blueprint Review",
-            "导出功能"
-        ]
+        "选择示例", ["日志查看器", "Graph 可视化", "Token 统计", "Blueprint Review", "导出功能"]
     )
 
     st.divider()

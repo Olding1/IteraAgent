@@ -94,27 +94,31 @@ for mod_name in MODULES:
     try:
         # print(f"Checking {mod_name}...")
         module = importlib.import_module(mod_name)
-        
+
         # Look for BaseTool inside
         for attr_name, attr_value in inspect.getmembers(module):
-            if (inspect.isclass(attr_value) 
-                and issubclass(attr_value, BaseTool) 
-                and attr_value is not BaseTool):
-                
+            if (
+                inspect.isclass(attr_value)
+                and issubclass(attr_value, BaseTool)
+                and attr_value is not BaseTool
+            ):
+
                 # Check for concrete implementation
                 if attr_name.startswith("Base") or "Mixin" in attr_name:
                     continue
-                
+
                 # Try simple instantiations
                 try:
                     name = None
                     desc = None
                     args_schema = None
-                    
+
                     # 1. Try class attributes first (safer)
                     if hasattr(attr_value, "name") and isinstance(attr_value.name, str):
                         name = attr_value.name
-                    if hasattr(attr_value, "description") and isinstance(attr_value.description, str):
+                    if hasattr(attr_value, "description") and isinstance(
+                        attr_value.description, str
+                    ):
                         desc = attr_value.description
                     if hasattr(attr_value, "args_schema"):
                         args_schema = attr_value.args_schema
@@ -132,17 +136,20 @@ for mod_name in MODULES:
                             if not name:
                                 name = attr_name
                             if not desc:
-                                desc = getattr(attr_value, "__doc__", "") or "No description available."
-                    
+                                desc = (
+                                    getattr(attr_value, "__doc__", "")
+                                    or "No description available."
+                                )
+
                     # 4. Filter out empty or abstract tools
                     if not name or "Base" in name or desc == "No description available.":
-                         # try harder to get name
-                         name = getattr(attr_value, "name", attr_name)
+                        # try harder to get name
+                        name = getattr(attr_value, "name", attr_name)
 
                     # Ensure we have a string for name
                     if not isinstance(name, str):
                         name = str(name)
-                        
+
                     if name and desc:
                         # Extract schema json
                         schema_json = None
@@ -155,27 +162,27 @@ for mod_name in MODULES:
                                 except:
                                     pass
                         elif hasattr(attr_value, "args_schema") and attr_value.args_schema:
-                             # Try getting schema from class attribute
-                             try:
-                                 schema_json = attr_value.args_schema.model_json_schema()
-                             except:
-                                 pass
-                                
+                            # Try getting schema from class attribute
+                            try:
+                                schema_json = attr_value.args_schema.model_json_schema()
+                            except:
+                                pass
+
                         entry = {
                             "id": name.replace(" ", "_").replace(":", "").lower(),
                             "name": name,
                             "description": desc,
-                            "package_name": "langchain-community", # Default
+                            "package_name": "langchain-community",  # Default
                             "import_path": f"{mod_name}.{attr_name}",
                             "category": "community",
-                            "requires_api_key": True, # Conservative
-                            "args_schema": schema_json
+                            "requires_api_key": True,  # Conservative
+                            "args_schema": schema_json,
                         }
-                        
+
                         # Add if unique
-                        if not any(t['id'] == entry['id'] for t in found_tools):
-                             found_tools.append(entry)
-                             print(f"✅ Found: {name}")
+                        if not any(t["id"] == entry["id"] for t in found_tools):
+                            found_tools.append(entry)
+                            print(f"✅ Found: {name}")
 
                 except:
                     pass

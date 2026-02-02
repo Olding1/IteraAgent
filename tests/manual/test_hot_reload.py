@@ -13,6 +13,7 @@ print("=" * 60)
 # 第一次导入
 print("\n1️⃣ 第一次导入 Runner...")
 from src.core.runner import Runner
+
 print(f"   Runner 模块 ID: {id(sys.modules['src.core.runner'])}")
 
 # 模拟用户生成了新 Agent (此时可能修改了 runner.py)
@@ -24,8 +25,8 @@ print("\n3️⃣ 执行热重载...")
 import importlib
 
 modules_to_reload = [
-    'src.core.runner',
-    'src.core.compiler',
+    "src.core.runner",
+    "src.core.compiler",
 ]
 
 for module_name in modules_to_reload:
@@ -36,6 +37,7 @@ for module_name in modules_to_reload:
 # 第二次导入 (应该是新的模块)
 print("\n4️⃣ 重新导入 Runner...")
 from src.core.runner import Runner as Runner2
+
 print(f"   Runner 模块 ID: {id(sys.modules['src.core.runner'])}")
 
 # 验证

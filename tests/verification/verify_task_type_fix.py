@@ -8,7 +8,7 @@ meta1 = ProjectMeta(
     agent_name="TestAgent",
     description="Test description",
     task_type=TaskType.RAG,
-    user_intent_summary="Test intent"
+    user_intent_summary="Test intent",
 )
 print(f"  task_type value: {meta1.task_type}")
 print(f"  task_type type: {type(meta1.task_type)}")
@@ -22,7 +22,7 @@ meta2 = ProjectMeta(
     agent_name="TestAgent2",
     description="Test description",
     task_type="search",
-    user_intent_summary="Test intent"
+    user_intent_summary="Test intent",
 )
 print(f"  task_type value: {meta2.task_type}")
 print(f"  task_type type: {type(meta2.task_type)}")
@@ -39,10 +39,7 @@ test_cases = [
 
 for task_type_input, expected in test_cases:
     meta = ProjectMeta(
-        agent_name="Test",
-        description="Test",
-        task_type=task_type_input,
-        user_intent_summary="Test"
+        agent_name="Test", description="Test", task_type=task_type_input, user_intent_summary="Test"
     )
     # This is what tool_selector does now (without .value)
     if meta.task_type == "search":
@@ -51,7 +48,7 @@ for task_type_input, expected in test_cases:
         result = "analysis tools"
     else:
         result = "other tools"
-    
+
     print(f"  Input: {task_type_input} -> task_type: {meta.task_type} -> Result: {result}")
 
 print("  ✅ Test 3 passed\n")

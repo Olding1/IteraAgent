@@ -14,13 +14,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 class TestTestAnalyzer:
     """Test LLM-based test analyzer"""
-    
+
     def setup_method(self):
         """Setup test fixtures"""
         # Mock LLM client
         self.mock_llm = MagicMock()
         self.analyzer = TestAnalyzer(self.mock_llm)
-    
+
     @pytest.mark.asyncio
     async def test_analyze_rag_failure(self):
         """Test analysis of RAG-related failures"""
@@ -35,7 +35,7 @@ class TestTestAnalyzer:
                 expected_output="Correct answer",
                 retrieval_context=[],
                 error_message="Contextual Recall too low: 0.3",
-                duration_seconds=1.0
+                duration_seconds=1.0,
             ),
             TestCaseReport(
                 test_id="test_2",
@@ -46,10 +46,10 @@ class TestTestAnalyzer:
                 expected_output="Factual",
                 retrieval_context=[],
                 error_message="Faithfulness score below threshold",
-                duration_seconds=1.0
-            )
+                duration_seconds=1.0,
+            ),
         ]
-        
+
         report = IterationReport(
             iteration_id=1,
             timestamp=datetime.now(),
@@ -62,9 +62,9 @@ class TestTestAnalyzer:
             error_types={},
             judge_feedback="",
             graph_snapshot={},
-            avg_metrics={}
+            avg_metrics={},
         )
-        
+
         # Mock LLM response
         mock_response = """{
             "primary_issue": "RAG 检索质量不足",
@@ -81,20 +81,20 @@ class TestTestAnalyzer:
             ],
             "estimated_success_rate": 0.75
         }"""
-        
+
         self.mock_llm.call = AsyncMock(return_value=mock_response)
-        
+
         # Analyze
         config = {"graph": {}, "rag": {"retriever_k": 3}, "tools": None}
         result = await self.analyzer.analyze_test_report(report, config)
-        
+
         # Assert
         assert result.primary_issue == "RAG 检索质量不足"
         assert result.estimated_success_rate == 0.75
         assert len(result.fix_strategy) == 1
         assert result.fix_strategy[0].target == "rag_builder"
         assert result.fix_strategy[0].priority == "high"
-    
+
     @pytest.mark.asyncio
     async def test_analyze_success(self):
         """Test analysis when all tests pass"""
@@ -109,10 +109,10 @@ class TestTestAnalyzer:
                 expected_output="Correct",
                 retrieval_context=[],
                 error_message=None,
-                duration_seconds=1.0
+                duration_seconds=1.0,
             )
         ]
-        
+
         report = IterationReport(
             iteration_id=1,
             timestamp=datetime.now(),
@@ -125,18 +125,18 @@ class TestTestAnalyzer:
             error_types={},
             judge_feedback="",
             graph_snapshot={},
-            avg_metrics={}
+            avg_metrics={},
         )
-        
+
         # Analyze (should not call LLM)
         config = {"graph": {}, "rag": None, "tools": None}
         result = await self.analyzer.analyze_test_report(report, config)
-        
+
         # Assert
         assert result.primary_issue == "所有测试通过"
         assert result.estimated_success_rate == 1.0
         assert len(result.fix_strategy) == 0
-    
+
     @pytest.mark.asyncio
     async def test_parse_llm_response_with_markdown(self):
         """Test parsing LLM response with markdown code blocks"""
@@ -152,28 +152,28 @@ class TestTestAnalyzer:
 }
 ```
 """
-        
+
         # Parse
         result = self.analyzer._parse_analysis_response(mock_response)
-        
+
         # Assert
         assert result.primary_issue == "Logic error"
         assert result.root_cause == "Graph routing issue"
         assert result.estimated_success_rate == 0.5
-    
+
     @pytest.mark.asyncio
     async def test_parse_invalid_response(self):
         """Test handling of invalid LLM response"""
         # Invalid JSON
         mock_response = "This is not valid JSON"
-        
+
         # Parse (should return error result)
         result = self.analyzer._parse_analysis_response(mock_response)
-        
+
         # Assert
         assert "解析失败" in result.primary_issue
         assert result.estimated_success_rate == 0.0
-    
+
     def test_create_analysis_prompt(self):
         """Test prompt generation"""
         # Create test cases
@@ -187,10 +187,10 @@ class TestTestAnalyzer:
                 expected_output="Right",
                 retrieval_context=[],
                 error_message="Test failed",
-                duration_seconds=1.0
+                duration_seconds=1.0,
             )
         ]
-        
+
         report = IterationReport(
             iteration_id=1,
             timestamp=datetime.now(),
@@ -203,14 +203,14 @@ class TestTestAnalyzer:
             error_types={},
             judge_feedback="",
             graph_snapshot={},
-            avg_metrics={}
+            avg_metrics={},
         )
-        
+
         config = {"graph": {}, "rag": None, "tools": None}
-        
+
         # Generate prompt
         prompt = self.analyzer._create_analysis_prompt(failed_cases, config, report)
-        
+
         # Assert
         assert "测试失败分析任务" in prompt
         assert "Test Failure" in prompt

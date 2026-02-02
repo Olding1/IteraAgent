@@ -23,19 +23,17 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 # Page config
 st.set_page_config(
-    page_title="Agent Zero v8.0",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="Agent Zero v8.0", page_icon="🤖", layout="wide", initial_sidebar_state="expanded"
 )
 
 # Initialize session state
-if 'current_page' not in st.session_state:
+if "current_page" not in st.session_state:
     st.session_state.current_page = "home"
 
 # ============================================================
 # Helper Functions
 # ============================================================
+
 
 def run_async(coro):
     """Run async function in Streamlit"""
@@ -45,6 +43,7 @@ def run_async(coro):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     return loop.run_until_complete(coro)
+
 
 # ============================================================
 # Sidebar Navigation
@@ -56,15 +55,8 @@ with st.sidebar:
     # Navigation
     page = st.radio(
         "导航",
-        [
-            "🏠 首页",
-            "🏗️ 新建 Agent",
-            "📦 Agent 管理",
-            "🔄 测试优化",
-            "📤 导出功能",
-            "⚙️ 设置"
-        ],
-        key="navigation"
+        ["🏠 首页", "🏗️ 新建 Agent", "📦 Agent 管理", "🔄 测试优化", "📤 导出功能", "⚙️ 设置"],
+        key="navigation",
     )
 
     st.markdown("---")
@@ -73,7 +65,7 @@ with st.sidebar:
     st.subheader("📊 快速统计")
     agents_dir = Path("agents")
     if agents_dir.exists():
-        agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+        agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
         st.metric("已生成 Agent", len(agents))
     else:
         st.metric("已生成 Agent", 0)
@@ -93,7 +85,8 @@ if page == "🏠 首页":
     st.markdown("---")
 
     # Welcome message
-    st.markdown("""
+    st.markdown(
+        """
     ### 欢迎使用 Agent Zero v8.0！
 
     这是一个完整的 Agent 构建和管理平台，提供：
@@ -102,7 +95,8 @@ if page == "🏠 首页":
     - 🔄 测试和迭代优化
     - 📤 导出到 Dify 平台
     - ⚙️ 系统配置管理
-    """)
+    """
+    )
 
     # System health check
     st.subheader("📊 系统健康检查")
@@ -118,6 +112,7 @@ if page == "🏠 首页":
             try:
                 from dotenv import load_dotenv
                 import os
+
                 load_dotenv()
 
                 builder_provider = os.getenv("BUILDER_PROVIDER", "openai")
@@ -141,6 +136,7 @@ if page == "🏠 首页":
         if env_file.exists():
             try:
                 import os
+
                 runtime_provider = os.getenv("RUNTIME_PROVIDER", "openai")
                 runtime_model = os.getenv("RUNTIME_MODEL", "gpt-3.5-turbo")
                 runtime_key = os.getenv("RUNTIME_API_KEY", "")
@@ -201,7 +197,8 @@ elif page == "🏗️ 新建 Agent":
     st.title("🏗️ 新建 Agent")
     st.markdown("---")
 
-    st.info("""
+    st.info(
+        """
     ### 💡 使用命令行创建 Agent
 
     由于 Agent 创建过程涉及复杂的交互式流程，建议使用命令行工具：
@@ -219,7 +216,8 @@ elif page == "🏗️ 新建 Agent":
     5. 运行测试验证
 
     **创建完成后**，返回此 UI 进行管理和导出。
-    """)
+    """
+    )
 
     st.markdown("---")
 
@@ -229,9 +227,7 @@ elif page == "🏗️ 新建 Agent":
 
         agent_name = st.text_input("Agent 名称", placeholder="例如：智能客服助手")
         agent_desc = st.text_area(
-            "Agent 描述",
-            placeholder="描述 Agent 的功能和用途...",
-            height=100
+            "Agent 描述", placeholder="描述 Agent 的功能和用途...", height=100
         )
 
         col1, col2 = st.columns(2)
@@ -255,11 +251,12 @@ elif page == "📦 Agent 管理":
         st.warning("agents 目录不存在")
         st.stop()
 
-    agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+    agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
 
     if not agents:
         st.info("暂无 Agent")
-        st.markdown("""
+        st.markdown(
+            """
         ### 💡 如何创建 Agent？
 
         使用命令行工具创建：
@@ -267,7 +264,8 @@ elif page == "📦 Agent 管理":
         python start.py
         # 选择选项 1: 新建 Agent
         ```
-        """)
+        """
+        )
         st.stop()
 
     # Agent list
@@ -304,19 +302,19 @@ elif page == "📦 Agent 管理":
                 # Load graph info
                 if graph_file.exists():
                     try:
-                        with open(graph_file, 'r', encoding='utf-8') as f:
+                        with open(graph_file, "r", encoding="utf-8") as f:
                             graph_data = json.load(f)
 
-                        pattern = graph_data.get('pattern', {})
+                        pattern = graph_data.get("pattern", {})
                         if isinstance(pattern, dict):
-                            pattern_type = pattern.get('pattern_type', 'unknown')
-                            description = pattern.get('description', '')
+                            pattern_type = pattern.get("pattern_type", "unknown")
+                            description = pattern.get("description", "")
                         else:
                             pattern_type = str(pattern)
-                            description = ''
+                            description = ""
 
-                        nodes = graph_data.get('nodes', [])
-                        edges = graph_data.get('edges', [])
+                        nodes = graph_data.get("nodes", [])
+                        edges = graph_data.get("edges", [])
 
                         st.info(f"**模式:** {pattern_type}")
                         if description:
@@ -351,7 +349,7 @@ elif page == "🔄 测试优化":
         st.warning("agents 目录不存在")
         st.stop()
 
-    agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+    agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
 
     if not agents:
         st.info("暂无 Agent 可测试")
@@ -361,17 +359,14 @@ elif page == "🔄 测试优化":
     st.subheader("1️⃣ 选择 Agent")
 
     default_index = 0
-    if 'selected_agent' in st.session_state:
+    if "selected_agent" in st.session_state:
         try:
             default_index = [a.name for a in agents].index(st.session_state.selected_agent)
         except ValueError:
             pass
 
     selected_agent = st.selectbox(
-        "选择要测试的 Agent",
-        agents,
-        format_func=lambda x: x.name,
-        index=default_index
+        "选择要测试的 Agent", agents, format_func=lambda x: x.name, index=default_index
     )
 
     if not selected_agent:
@@ -385,15 +380,15 @@ elif page == "🔄 测试优化":
         history_file = reports_dir / "history.json"
         if history_file.exists():
             try:
-                with open(history_file, 'r', encoding='utf-8') as f:
+                with open(history_file, "r", encoding="utf-8") as f:
                     history_data = json.load(f)
 
-                iterations = history_data.get('iterations', [])
+                iterations = history_data.get("iterations", [])
                 st.info(f"📊 历史迭代: {len(iterations)} 次")
 
                 if iterations:
                     latest = iterations[-1]
-                    pass_rate = latest.get('pass_rate', 0)
+                    pass_rate = latest.get("pass_rate", 0)
                     st.metric("最新通过率", f"{pass_rate:.1%}")
             except Exception as e:
                 st.warning(f"加载历史失败: {e}")
@@ -403,7 +398,8 @@ elif page == "🔄 测试优化":
     # Test options
     st.subheader("2️⃣ 测试选项")
 
-    st.info("""
+    st.info(
+        """
     ### 💡 使用命令行进行测试优化
 
     由于测试和迭代优化涉及复杂的异步流程，建议使用命令行工具：
@@ -425,7 +421,8 @@ elif page == "🔄 测试优化":
     - RAG 参数调优
     - 工具选择优化
     - 依赖项修复
-    """)
+    """
+    )
 
     # Quick test button (simplified)
     with st.expander("🧪 快速测试（简化版）"):
@@ -442,7 +439,7 @@ elif page == "🔄 测试优化":
                             cwd=str(selected_agent),
                             capture_output=True,
                             text=True,
-                            timeout=300
+                            timeout=300,
                         )
 
                         st.code(result.stdout)
@@ -471,7 +468,7 @@ elif page == "📤 导出功能":
         st.warning("agents 目录不存在")
         st.stop()
 
-    agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+    agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
 
     if not agents:
         st.info("暂无 Agent 可导出")
@@ -481,17 +478,14 @@ elif page == "📤 导出功能":
     st.subheader("1️⃣ 选择 Agent")
 
     default_index = 0
-    if 'selected_agent' in st.session_state:
+    if "selected_agent" in st.session_state:
         try:
             default_index = [a.name for a in agents].index(st.session_state.selected_agent)
         except ValueError:
             pass
 
     selected_agent = st.selectbox(
-        "选择要导出的 Agent",
-        agents,
-        format_func=lambda x: x.name,
-        index=default_index
+        "选择要导出的 Agent", agents, format_func=lambda x: x.name, index=default_index
     )
 
     if not selected_agent:
@@ -513,7 +507,7 @@ elif page == "📤 导出功能":
         from src.utils.readme_generator import generate_readme
         from src.schemas.graph_structure import GraphStructure
 
-        with open(graph_file, 'r', encoding='utf-8') as f:
+        with open(graph_file, "r", encoding="utf-8") as f:
             graph_data = json.load(f)
         graph = GraphStructure.model_validate(graph_data)
 
@@ -532,6 +526,7 @@ elif page == "📤 导出功能":
         # Visualize graph
         with st.expander("📊 查看 Graph 结构"):
             from src.ui.components import visualize_graph
+
             visualize_graph(graph, height=400)
 
         # Export options
@@ -563,13 +558,13 @@ elif page == "📤 导出功能":
                         dify_path = export_to_dify(
                             graph=graph,
                             agent_name=selected_agent.name,
-                            output_path=output_dir / f"{selected_agent.name}_dify.yml"
+                            output_path=output_dir / f"{selected_agent.name}_dify.yml",
                         )
                         st.success(f"✅ Dify YAML 已导出: {dify_path}")
                         st.info(f"文件大小: {dify_path.stat().st_size} 字节")
 
                         # Show download button
-                        with open(dify_path, 'r', encoding='utf-8') as f:
+                        with open(dify_path, "r", encoding="utf-8") as f:
                             yaml_content = f.read()
 
                         st.download_button(
@@ -577,20 +572,20 @@ elif page == "📤 导出功能":
                             data=yaml_content,
                             file_name=f"{selected_agent.name}_dify.yml",
                             mime="text/yaml",
-                            use_container_width=True
+                            use_container_width=True,
                         )
 
                     if export_readme:
                         readme_path = generate_readme(
                             agent_name=selected_agent.name,
                             graph=graph,
-                            output_path=output_dir / "README.md"
+                            output_path=output_dir / "README.md",
                         )
                         st.success(f"✅ README 已生成: {readme_path}")
                         st.info(f"文件大小: {readme_path.stat().st_size} 字节")
 
                         # Show download button
-                        with open(readme_path, 'r', encoding='utf-8') as f:
+                        with open(readme_path, "r", encoding="utf-8") as f:
                             readme_content = f.read()
 
                         st.download_button(
@@ -598,7 +593,7 @@ elif page == "📤 导出功能":
                             data=readme_content,
                             file_name="README.md",
                             mime="text/markdown",
-                            use_container_width=True
+                            use_container_width=True,
                         )
 
                     st.success(f"✅ 导出完成！文件保存在: {output_dir}")
@@ -606,23 +601,27 @@ elif page == "📤 导出功能":
                     # Show next steps
                     st.markdown("---")
                     st.subheader("💡 下一步")
-                    st.markdown("""
+                    st.markdown(
+                        """
                     1. 访问 [Dify Cloud](https://cloud.dify.ai)
                     2. 创建应用 → 选择 **Chatflow**
                     3. 点击 **导入 DSL** → 上传 YAML 文件
                     4. 配置 API Keys 和工具
                     5. 如果包含 RAG 节点，需要手动添加 Knowledge Retrieval 节点
                     6. 测试运行
-                    """)
+                    """
+                    )
 
                 except Exception as e:
                     st.error(f"❌ 导出失败: {e}")
                     import traceback
+
                     st.code(traceback.format_exc())
 
     except Exception as e:
         st.error(f"❌ 加载 Graph 失败: {e}")
         import traceback
+
         st.code(traceback.format_exc())
 
 # ============================================================
@@ -640,7 +639,8 @@ elif page == "⚙️ 设置":
         st.success("✅ .env 文件存在")
         st.info(f"位置: {env_file.absolute()}")
 
-        st.markdown("""
+        st.markdown(
+            """
         ### 编辑 API 配置
 
         请直接编辑 `.env` 文件来配置 API 设置：
@@ -656,7 +656,8 @@ elif page == "⚙️ 设置":
         RUNTIME_MODEL=gpt-3.5-turbo
         RUNTIME_API_KEY=your_key_here
         ```
-        """)
+        """
+        )
 
         if st.button("📝 在编辑器中打开 .env"):
             import platform
@@ -674,7 +675,8 @@ elif page == "⚙️ 设置":
                 st.error(f"❌ 打开失败: {e}")
     else:
         st.error("❌ .env 文件不存在")
-        st.markdown("""
+        st.markdown(
+            """
         ### 创建 .env 文件
 
         请从模板创建 .env 文件：
@@ -684,7 +686,8 @@ elif page == "⚙️ 设置":
         ```
 
         然后编辑 .env 文件，添加您的 API Keys。
-        """)
+        """
+        )
 
     st.markdown("---")
 
@@ -706,13 +709,13 @@ elif page == "⚙️ 设置":
             "pydantic": "Pydantic",
             "yaml": "PyYAML",
             "jinja2": "Jinja2",
-            "plotly": "Plotly"
+            "plotly": "Plotly",
         }
 
         for module, name in deps.items():
             try:
-                mod = __import__(module.replace('-', '_'))
-                version = getattr(mod, '__version__', 'unknown')
+                mod = __import__(module.replace("-", "_"))
+                version = getattr(mod, "__version__", "unknown")
                 st.success(f"✅ {name}: {version}")
             except ImportError:
                 st.error(f"❌ {name}: 未安装")
@@ -721,7 +724,8 @@ elif page == "⚙️ 设置":
 
     # About
     st.subheader("ℹ️ 关于")
-    st.markdown("""
+    st.markdown(
+        """
     **Agent Zero v8.0**
 
     智能 Agent 构建和管理平台
@@ -743,7 +747,8 @@ elif page == "⚙️ 设置":
     ---
 
     Created: 2026-01-29
-    """)
+    """
+    )
 
 # ============================================================
 # Footer
@@ -753,5 +758,5 @@ st.markdown(
     "<div style='text-align: center; color: gray;'>"
     "🤖 Agent Zero v8.0 | Built with ❤️ using Streamlit"
     "</div>",
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )

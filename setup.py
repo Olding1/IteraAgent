@@ -12,17 +12,19 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
+
 # 颜色输出
 class Colors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKCYAN = "\033[96m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
 
 def print_header(text: str):
     """打印标题"""
@@ -30,55 +32,67 @@ def print_header(text: str):
     print(f"{Colors.HEADER}{Colors.BOLD}{text.center(60)}{Colors.ENDC}")
     print(f"{Colors.HEADER}{Colors.BOLD}{'='*60}{Colors.ENDC}\n")
 
+
 def print_success(text: str):
     """打印成功信息"""
     print(f"{Colors.OKGREEN}✓ {text}{Colors.ENDC}")
+
 
 def print_info(text: str):
     """打印信息"""
     print(f"{Colors.OKCYAN}ℹ {text}{Colors.ENDC}")
 
+
 def print_warning(text: str):
     """打印警告"""
     print(f"{Colors.WARNING}⚠ {text}{Colors.ENDC}")
 
+
 def print_error(text: str):
     """打印错误"""
     print(f"{Colors.FAIL}✗ {text}{Colors.ENDC}")
+
 
 def check_python_version():
     """检查 Python 版本"""
     print_info("检查 Python 版本...")
     version = sys.version_info
     if version.major < 3 or (version.major == 3 and version.minor < 8):
-        print_error(f"需要 Python 3.8 或更高版本，当前版本: {version.major}.{version.minor}.{version.micro}")
+        print_error(
+            f"需要 Python 3.8 或更高版本，当前版本: {version.major}.{version.minor}.{version.micro}"
+        )
         return False
     print_success(f"Python 版本: {version.major}.{version.minor}.{version.micro}")
     return True
+
 
 def check_pip():
     """检查 pip 是否可用"""
     print_info("检查 pip...")
     try:
-        subprocess.run([sys.executable, "-m", "pip", "--version"],
-                      check=True, capture_output=True)
+        subprocess.run([sys.executable, "-m", "pip", "--version"], check=True, capture_output=True)
         print_success("pip 已安装")
         return True
     except subprocess.CalledProcessError:
         print_error("pip 未安装或不可用")
         return False
 
+
 def upgrade_pip():
     """升级 pip"""
     print_info("升级 pip 到最新版本...")
     try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"],
-                      check=True, capture_output=True)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--upgrade", "pip"],
+            check=True,
+            capture_output=True,
+        )
         print_success("pip 已升级")
         return True
     except subprocess.CalledProcessError as e:
         print_warning(f"pip 升级失败: {e}")
         return False
+
 
 def install_requirements():
     """安装依赖"""
@@ -95,8 +109,7 @@ def install_requirements():
     print_info("这可能需要几分钟时间，请耐心等待...")
 
     try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "-r", req_file],
-                      check=True)
+        subprocess.run([sys.executable, "-m", "pip", "install", "-r", req_file], check=True)
         print_success(f"{req_file} 安装完成")
     except subprocess.CalledProcessError as e:
         print_error(f"{req_file} 安装失败: {e}")
@@ -104,14 +117,21 @@ def install_requirements():
 
     # 询问是否安装开发依赖
     print()
-    response = input(f"{Colors.OKCYAN}是否安装开发依赖 (用于测试、类型检查、文档生成)? (y/N): {Colors.ENDC}").strip().lower()
-    if response == 'y':
+    response = (
+        input(
+            f"{Colors.OKCYAN}是否安装开发依赖 (用于测试、类型检查、文档生成)? (y/N): {Colors.ENDC}"
+        )
+        .strip()
+        .lower()
+    )
+    if response == "y":
         dev_req_file = "requirements-dev.txt"
         if os.path.exists(dev_req_file):
             print_info(f"安装 {dev_req_file} 中的依赖...")
             try:
-                subprocess.run([sys.executable, "-m", "pip", "install", "-r", dev_req_file],
-                              check=True)
+                subprocess.run(
+                    [sys.executable, "-m", "pip", "install", "-r", dev_req_file], check=True
+                )
                 print_success(f"{dev_req_file} 安装完成")
             except subprocess.CalledProcessError as e:
                 print_warning(f"{dev_req_file} 安装失败: {e}")
@@ -119,6 +139,7 @@ def install_requirements():
             print_warning(f"未找到 {dev_req_file}")
 
     return True
+
 
 def setup_env_file():
     """配置 .env 文件"""
@@ -130,7 +151,7 @@ def setup_env_file():
     if env_file.exists():
         print_warning(".env 文件已存在")
         response = input(f"{Colors.WARNING}是否覆盖? (y/N): {Colors.ENDC}").strip().lower()
-        if response != 'y':
+        if response != "y":
             print_info("保留现有 .env 文件")
             return True
 
@@ -149,93 +170,74 @@ def setup_env_file():
     configs = {
         "BUILDER_PROVIDER": {
             "prompt": "Builder Provider (openai/anthropic/azure)",
-            "default": "openai"
+            "default": "openai",
         },
-        "BUILDER_MODEL": {
-            "prompt": "Builder Model (例如: gpt-4o)",
-            "default": "gpt-4o"
-        },
-        "BUILDER_API_KEY": {
-            "prompt": "Builder API Key",
-            "default": ""
-        },
-        "BUILDER_BASE_URL": {
-            "prompt": "Builder Base URL (可选，使用默认则留空)",
-            "default": ""
-        },
+        "BUILDER_MODEL": {"prompt": "Builder Model (例如: gpt-4o)", "default": "gpt-4o"},
+        "BUILDER_API_KEY": {"prompt": "Builder API Key", "default": ""},
+        "BUILDER_BASE_URL": {"prompt": "Builder Base URL (可选，使用默认则留空)", "default": ""},
         "RUNTIME_PROVIDER": {
             "prompt": "Runtime Provider (openai/anthropic/azure)",
-            "default": "openai"
+            "default": "openai",
         },
         "RUNTIME_MODEL": {
             "prompt": "Runtime Model (例如: gpt-3.5-turbo)",
-            "default": "gpt-3.5-turbo"
+            "default": "gpt-3.5-turbo",
         },
         "RUNTIME_API_KEY": {
             "prompt": "Runtime API Key (留空则使用 Builder API Key)",
-            "default": ""
+            "default": "",
         },
-        "EMBEDDING_PROVIDER": {
-            "prompt": "Embedding Provider (ollama/openai)",
-            "default": "ollama"
-        },
+        "EMBEDDING_PROVIDER": {"prompt": "Embedding Provider (ollama/openai)", "default": "ollama"},
         "EMBEDDING_MODEL": {
             "prompt": "Embedding Model (例如: nomic-embed-text)",
-            "default": "nomic-embed-text"
+            "default": "nomic-embed-text",
         },
         "EMBEDDING_BASE_URL": {
             "prompt": "Embedding Base URL (例如: http://localhost:11434)",
-            "default": "http://localhost:11434"
+            "default": "http://localhost:11434",
         },
         "JUDGE_PROVIDER": {
             "prompt": "Judge Provider (openai/anthropic/azure)",
-            "default": "openai"
+            "default": "openai",
         },
-        "JUDGE_MODEL": {
-            "prompt": "Judge Model (例如: gpt-4o)",
-            "default": "gpt-4o"
-        },
-        "JUDGE_API_KEY": {
-            "prompt": "Judge API Key (留空则使用 Builder API Key)",
-            "default": ""
-        }
+        "JUDGE_MODEL": {"prompt": "Judge Model (例如: gpt-4o)", "default": "gpt-4o"},
+        "JUDGE_API_KEY": {"prompt": "Judge API Key (留空则使用 Builder API Key)", "default": ""},
     }
 
     # 读取现有配置
-    env_content = env_file.read_text(encoding='utf-8')
+    env_content = env_file.read_text(encoding="utf-8")
 
     print()
     for key, config in configs.items():
-        value = input(f"{Colors.OKCYAN}{config['prompt']} [{config['default']}]: {Colors.ENDC}").strip()
+        value = input(
+            f"{Colors.OKCYAN}{config['prompt']} [{config['default']}]: {Colors.ENDC}"
+        ).strip()
         if not value:
-            value = config['default']
+            value = config["default"]
 
         # 更新配置
         if value:
             env_content = env_content.replace(f"{key}=", f"{key}={value}")
 
     # 写回文件
-    env_file.write_text(env_content, encoding='utf-8')
+    env_file.write_text(env_content, encoding="utf-8")
     print_success("\n环境变量配置完成")
 
     return True
+
 
 def create_directories():
     """创建必要的目录"""
     print_info("创建项目目录...")
 
-    directories = [
-        "agents",
-        "exports",
-        "logs",
-        "data"
-    ]
+    directories = ["agents", "exports", "logs", "data"]
 
     for directory in directories:
         Path(directory).mkdir(exist_ok=True)
 
     print_success("项目目录创建完成")
     return True
+
 
 def verify_installation():
     """验证安装"""
@@ -255,6 +257,7 @@ def verify_installation():
     except ImportError as e:
         print_error(f"依赖验证失败: {e}")
         return False
+
 
 def print_next_steps():
     """打印后续步骤"""
@@ -285,6 +288,7 @@ def print_next_steps():
 
     print(f"{Colors.BOLD}需要帮助?{Colors.ENDC}")
     print(f"   GitHub Issues: https://github.com/yourusername/Agent_Zero/issues\n")
+
 
 def main():
     """主函数"""
@@ -328,6 +332,7 @@ def main():
 
     # 打印后续步骤
     print_next_steps()
+
 
 if __name__ == "__main__":
     try:

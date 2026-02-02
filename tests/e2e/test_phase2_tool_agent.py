@@ -22,15 +22,15 @@ import os
 
 async def test_tool_agent_generation():
     """Test complete tool-enabled agent generation pipeline."""
-    
+
     print("=" * 70)
     print("🧪 Phase 2 Week 4 E2E Test: Tool-Enabled Agent Generation")
     print("=" * 70)
     print()
-    
+
     # Load environment
     load_dotenv()
-    
+
     # Step 1: Initialize Builder Client
     print("📡 Step 1: Initializing Builder Client...")
     builder_config = BuilderAPIConfig(
@@ -42,35 +42,35 @@ async def test_tool_agent_generation():
         max_retries=int(os.getenv("BUILDER_MAX_RETRIES", "3")),
         temperature=float(os.getenv("BUILDER_TEMPERATURE", "0.7")),
     )
-    
+
     builder_client = BuilderClient(builder_config)
     print(f"✓ Builder: {builder_config.provider}/{builder_config.model}")
     print()
-    
+
     # Step 2: Register preset tools
     print("🔧 Step 2: Registering preset tools...")
     registry = get_global_registry()
     register_preset_tools(registry)
-    
+
     print(f"✓ Registered {registry.tool_count} tools")
     print(f"✓ Categories: {', '.join(registry.get_categories())}")
     print()
-    
+
     # Step 3: PM analyzes requirements
     print("🧠 Step 3: PM analyzing requirements...")
     pm = PM(builder_client)
-    
+
     try:
         project_meta = await pm.analyze_requirements(
             user_input="创建一个能搜索网络信息并进行数学计算的智能助手"
         )
-        
+
         print(f"✓ Agent Name: {project_meta.agent_name}")
         print(f"✓ Task Type: {project_meta.task_type}")
         print(f"✓ Has RAG: {project_meta.has_rag}")
         print(f"✓ Language: {project_meta.language}")
         print()
-        
+
     except Exception as e:
         print(f"⚠️  PM analysis failed, using fallback: {e}")
         project_meta = await pm.analyze_requirements(
@@ -78,24 +78,21 @@ async def test_tool_agent_generation():
         )
         print(f"✓ Fallback successful: {project_meta.agent_name}")
         print()
-    
+
     # Step 4: Tool Selector chooses tools
     print("🛠️  Step 4: Tool Selector choosing tools...")
     tool_selector = ToolSelector(builder_client, registry)
-    
+
     try:
-        tools_config = await tool_selector.select_tools(
-            project_meta=project_meta,
-            max_tools=3
-        )
-        
+        tools_config = await tool_selector.select_tools(project_meta=project_meta, max_tools=3)
+
         print(f"✓ Selected {len(tools_config.enabled_tools)} tools:")
         for tool_name in tools_config.enabled_tools:
             metadata = registry.get_metadata(tool_name)
             if metadata:
                 print(f"  - {tool_name}: {metadata.description[:60]}...")
         print()
-        
+
     except Exception as e:
         print(f"⚠️  Tool selection LLM refinement failed, using heuristics: {e}")
         tools_config = ToolsConfig(
@@ -103,18 +100,16 @@ async def test_tool_agent_generation():
         )
         print(f"✓ Heuristic selection: {', '.join(tools_config.enabled_tools)}")
         print()
-    
+
     # Step 5: Graph Designer creates graph
     print("🕸️  Step 5: Graph Designer creating graph...")
     graph_designer = GraphDesigner(builder_client)
-    
+
     try:
         graph_structure = await graph_designer.design_graph(
-            project_meta=project_meta,
-            tools_config=tools_config,
-            rag_config=None
+            project_meta=project_meta, tools_config=tools_config, rag_config=None
         )
-        
+
         print(f"✓ Nodes: {len(graph_structure.nodes)}")
         for node in graph_structure.nodes:
             print(f"  - {node.id} ({node.type})")
@@ -122,28 +117,26 @@ async def test_tool_agent_generation():
         print(f"✓ Conditional edges: {len(graph_structure.conditional_edges)}")
         print(f"✓ Entry point: {graph_structure.entry_point}")
         print()
-        
+
     except Exception as e:
         print(f"⚠️  Graph Designer LLM refinement failed, using heuristics: {e}")
-        graph_structure = graph_designer._heuristic_graph(
-            project_meta, tools_config, None
-        )
+        graph_structure = graph_designer._heuristic_graph(project_meta, tools_config, None)
         print(f"✓ Heuristic graph created")
         print()
-    
+
     # Step 6: Compiler generates code
     print("🔨 Step 6: Compiler generating code...")
     compiler = Compiler(template_dir=Path("src/templates"))
     output_dir = Path("agents") / "phase2_tool_test"
-    
+
     compile_result = compiler.compile(
         project_meta=project_meta,
         graph=graph_structure,
         rag_config=None,
         tools_config=tools_config,
-        output_dir=output_dir
+        output_dir=output_dir,
     )
-    
+
     if compile_result.success:
         print(f"✓ Code generated at: {output_dir}")
         print(f"✓ Files created: {len(compile_result.generated_files)}")
@@ -153,13 +146,13 @@ async def test_tool_agent_generation():
     else:
         print(f"✗ Compilation failed: {compile_result.error_message}")
         return False
-    
+
     # Step 7: EnvManager sets up environment
     print("🌐 Step 7: EnvManager setting up environment...")
     env_manager = EnvManager(output_dir)
-    
+
     setup_success = await env_manager.setup_environment()
-    
+
     if setup_success:
         print(f"✓ Virtual environment created")
         print(f"✓ Dependencies installed")
@@ -167,7 +160,7 @@ async def test_tool_agent_generation():
     else:
         print(f"⚠️  Environment setup had issues, but continuing...")
         print()
-    
+
     # Summary
     print("=" * 70)
     print("✅ Phase 2 Week 4 E2E Test PASSED!")
@@ -185,7 +178,7 @@ async def test_tool_agent_generation():
     print("      - Search for information")
     print("      - Perform calculations")
     print()
-    
+
     return True
 
 
@@ -199,5 +192,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n❌ Test failed with error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

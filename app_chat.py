@@ -15,31 +15,27 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Page config
-st.set_page_config(
-    page_title="Agent Zero v8.0 - Chat Mode",
-    page_icon="🤖",
-    layout="wide"
-)
+st.set_page_config(page_title="Agent Zero v8.0 - Chat Mode", page_icon="🤖", layout="wide")
 
 # Initialize session state
-if 'messages' not in st.session_state:
+if "messages" not in st.session_state:
     st.session_state.messages = []
-if 'current_step' not in st.session_state:
-    st.session_state.current_step = 'menu'
-if 'agent_data' not in st.session_state:
+if "current_step" not in st.session_state:
+    st.session_state.current_step = "menu"
+if "agent_data" not in st.session_state:
     st.session_state.agent_data = {}
 
 # ============================================================
 # Helper Functions
 # ============================================================
 
+
 def add_message(role, content):
     """Add message to chat history"""
-    st.session_state.messages.append({
-        "role": role,
-        "content": content,
-        "timestamp": datetime.now()
-    })
+    st.session_state.messages.append(
+        {"role": role, "content": content, "timestamp": datetime.now()}
+    )
+
 
 def run_async(coro):
     """Run async function"""
@@ -49,6 +45,7 @@ def run_async(coro):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     return loop.run_until_complete(coro)
+
 
 # ============================================================
 # Main UI
@@ -60,7 +57,8 @@ st.markdown("---")
 # Sidebar
 with st.sidebar:
     st.subheader("💬 Chat 模式")
-    st.markdown("""
+    st.markdown(
+        """
     使用聊天界面与 Agent Zero 交互：
 
     - 🏗️ 创建 Agent
@@ -69,14 +67,15 @@ with st.sidebar:
     - ⚙️ 系统设置
 
     **提示**: 输入 `/help` 查看命令
-    """)
+    """
+    )
 
     st.markdown("---")
 
     # Quick stats
     agents_dir = Path("agents")
     if agents_dir.exists():
-        agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+        agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
         st.metric("已生成 Agent", len(agents))
     else:
         st.metric("已生成 Agent", 0)
@@ -85,7 +84,7 @@ with st.sidebar:
 
     if st.button("🔄 重置对话", use_container_width=True):
         st.session_state.messages = []
-        st.session_state.current_step = 'menu'
+        st.session_state.current_step = "menu"
         st.session_state.agent_data = {}
         st.rerun()
 
@@ -125,7 +124,7 @@ if prompt := st.chat_input("输入命令或消息..."):
     response = ""
 
     # Command: /help
-    if prompt.lower() in ['/help', 'help', '帮助']:
+    if prompt.lower() in ["/help", "help", "帮助"]:
         response = """
 📖 **可用命令**:
 
@@ -143,9 +142,9 @@ if prompt := st.chat_input("输入命令或消息..."):
 """
 
     # Command: /create
-    elif prompt.lower() in ['/create', 'create', '创建', '新建']:
-        if st.session_state.current_step == 'menu':
-            st.session_state.current_step = 'create_start'
+    elif prompt.lower() in ["/create", "create", "创建", "新建"]:
+        if st.session_state.current_step == "menu":
+            st.session_state.current_step = "create_start"
             response = """
 🏗️ **创建新 Agent**
 
@@ -165,10 +164,10 @@ if prompt := st.chat_input("输入命令或消息..."):
 """
 
     # Command: /list
-    elif prompt.lower() in ['/list', 'list', '列表', '查看']:
+    elif prompt.lower() in ["/list", "list", "列表", "查看"]:
         agents_dir = Path("agents")
         if agents_dir.exists():
-            agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+            agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
             if agents:
                 response = f"📦 **已生成的 Agent ({len(agents)})**:\n\n"
                 for i, agent in enumerate(agents, 1):
@@ -182,12 +181,12 @@ if prompt := st.chat_input("输入命令或消息..."):
             response = "📦 agents 目录不存在\n\n输入 `/create` 创建新 Agent"
 
     # Command: /export
-    elif prompt.lower() in ['/export', 'export', '导出']:
+    elif prompt.lower() in ["/export", "export", "导出"]:
         agents_dir = Path("agents")
         if agents_dir.exists():
-            agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+            agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
             if agents:
-                st.session_state.current_step = 'export_select'
+                st.session_state.current_step = "export_select"
                 response = f"📤 **导出 Agent 到 Dify**\n\n请选择要导出的 Agent:\n\n"
                 for i, agent in enumerate(agents, 1):
                     response += f"{i}. {agent.name}\n"
@@ -198,12 +197,13 @@ if prompt := st.chat_input("输入命令或消息..."):
             response = "📦 agents 目录不存在"
 
     # Command: /status
-    elif prompt.lower() in ['/status', 'status', '状态']:
+    elif prompt.lower() in ["/status", "status", "状态"]:
         env_file = Path(".env")
         if env_file.exists():
             try:
                 from dotenv import load_dotenv
                 import os
+
                 load_dotenv()
 
                 builder_key = os.getenv("BUILDER_API_KEY", "")
@@ -219,17 +219,17 @@ if prompt := st.chat_input("输入命令或消息..."):
             response = "❌ .env 文件不存在\n\n请创建 .env 文件并配置 API Keys"
 
     # Command: /clear
-    elif prompt.lower() in ['/clear', 'clear', '清空']:
+    elif prompt.lower() in ["/clear", "clear", "清空"]:
         st.session_state.messages = []
-        st.session_state.current_step = 'menu'
+        st.session_state.current_step = "menu"
         st.session_state.agent_data = {}
         st.rerun()
 
     # Handle current step
-    elif st.session_state.current_step == 'create_start':
+    elif st.session_state.current_step == "create_start":
         # User provided agent description
-        st.session_state.agent_data['description'] = prompt
-        st.session_state.current_step = 'create_confirm'
+        st.session_state.agent_data["description"] = prompt
+        st.session_state.current_step = "create_confirm"
 
         response = f"""
 ✅ **收到你的需求**:
@@ -255,16 +255,16 @@ python start.py
 - 输入 `3` - 查看创建指南
 """
 
-    elif st.session_state.current_step == 'export_select':
+    elif st.session_state.current_step == "export_select":
         # User selected agent number
         try:
             idx = int(prompt)
             agents_dir = Path("agents")
-            agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+            agents = [d for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
 
             if 1 <= idx <= len(agents):
                 selected_agent = agents[idx - 1]
-                st.session_state.agent_data['selected_agent'] = selected_agent.name
+                st.session_state.agent_data["selected_agent"] = selected_agent.name
 
                 # Load and validate graph
                 graph_file = selected_agent / "graph.json"
@@ -273,7 +273,7 @@ python start.py
                         from src.exporters import export_to_dify, validate_for_dify
                         from src.schemas.graph_structure import GraphStructure
 
-                        with open(graph_file, 'r', encoding='utf-8') as f:
+                        with open(graph_file, "r", encoding="utf-8") as f:
                             graph_data = json.load(f)
                         graph = GraphStructure.model_validate(graph_data)
 
@@ -295,7 +295,7 @@ python start.py
                         dify_path = export_to_dify(
                             graph=graph,
                             agent_name=selected_agent.name,
-                            output_path=output_dir / f"{selected_agent.name}_dify.yml"
+                            output_path=output_dir / f"{selected_agent.name}_dify.yml",
                         )
 
                         response += f"✅ **导出成功**!\n\n"
@@ -309,14 +309,14 @@ python start.py
                         if any(node.type == "rag" for node in graph.nodes):
                             response += "4. 手动添加 Knowledge Retrieval 节点\n"
 
-                        st.session_state.current_step = 'menu'
+                        st.session_state.current_step = "menu"
 
                     except Exception as e:
                         response = f"❌ 导出失败: {e}"
-                        st.session_state.current_step = 'menu'
+                        st.session_state.current_step = "menu"
                 else:
                     response = f"❌ 未找到 graph.json: {graph_file}"
-                    st.session_state.current_step = 'menu'
+                    st.session_state.current_step = "menu"
             else:
                 response = f"❌ 无效序号，请输入 1-{len(agents)}"
         except ValueError:
@@ -324,11 +324,11 @@ python start.py
 
     # Default: try to understand intent
     else:
-        if any(word in prompt.lower() for word in ['创建', 'create', '新建', 'new']):
+        if any(word in prompt.lower() for word in ["创建", "create", "新建", "new"]):
             response = "🏗️ 我理解你想创建 Agent\n\n输入 `/create` 开始创建流程"
-        elif any(word in prompt.lower() for word in ['导出', 'export', '输出']):
+        elif any(word in prompt.lower() for word in ["导出", "export", "输出"]):
             response = "📤 我理解你想导出 Agent\n\n输入 `/export` 开始导出流程"
-        elif any(word in prompt.lower() for word in ['列表', 'list', '查看', '显示']):
+        elif any(word in prompt.lower() for word in ["列表", "list", "查看", "显示"]):
             response = "📦 我理解你想查看 Agent 列表\n\n输入 `/list` 查看所有 Agent"
         else:
             response = f"""
@@ -353,5 +353,5 @@ st.markdown(
     "<div style='text-align: center; color: gray;'>"
     "🤖 Agent Zero v8.0 Chat Mode | 输入 /help 查看帮助"
     "</div>",
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )

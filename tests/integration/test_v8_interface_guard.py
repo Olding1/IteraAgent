@@ -30,7 +30,7 @@ def sample_project_meta():
         user_intent_summary="Test tool validation",
         task_type="analysis",
         has_rag=False,
-        complexity_score=5
+        complexity_score=5,
     )
 
 
@@ -44,7 +44,7 @@ def sample_tools_config():
 def mock_tool_registry():
     """Create a mock tool registry with sample tools."""
     registry = ToolRegistry()
-    
+
     # Add calculator tool with schema
     calc_metadata = ToolMetadata(
         name="calculator",
@@ -52,18 +52,13 @@ def mock_tool_registry():
         category="math",
         openapi_schema={
             "type": "object",
-            "properties": {
-                "expression": {
-                    "type": "string",
-                    "description": "Math expression"
-                }
-            },
-            "required": ["expression"]
+            "properties": {"expression": {"type": "string", "description": "Math expression"}},
+            "required": ["expression"],
         },
-        examples=[{"expression": "2 + 2"}]
+        examples=[{"expression": "2 + 2"}],
     )
     registry._metadata["calculator"] = calc_metadata
-    
+
     # Add search tool with schema
     search_metadata = ToolMetadata(
         name="tavily_search",
@@ -72,82 +67,62 @@ def mock_tool_registry():
         openapi_schema={
             "type": "object",
             "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "Search query"
-                },
-                "max_results": {
-                    "type": "integer",
-                    "description": "Max results"
-                }
+                "query": {"type": "string", "description": "Search query"},
+                "max_results": {"type": "integer", "description": "Max results"},
             },
-            "required": ["query"]
+            "required": ["query"],
         },
-        examples=[{"query": "test search", "max_results": 5}]
+        examples=[{"query": "test search", "max_results": 5}],
     )
     registry._metadata["tavily_search"] = search_metadata
-    
+
     return registry
 
 
 class TestInterfaceGuardIntegration:
     """Test Interface Guard integration with GraphDesigner."""
-    
+
     @pytest.mark.asyncio
     async def test_graph_designer_validates_tools(
-        self,
-        mock_builder_client,
-        sample_project_meta,
-        sample_tools_config,
-        mock_tool_registry
+        self, mock_builder_client, sample_project_meta, sample_tools_config, mock_tool_registry
     ):
         """Test that GraphDesigner validates tools during graph design."""
         designer = GraphDesigner(mock_builder_client)
-        
+
         # Patch the global registry
-        with patch('src.tools.registry.get_global_registry', return_value=mock_tool_registry):
+        with patch("src.tools.registry.get_global_registry", return_value=mock_tool_registry):
             # Design graph with tools
             graph = await designer.design_graph(
-                sample_project_meta,
-                tools_config=sample_tools_config
+                sample_project_meta, tools_config=sample_tools_config
             )
-            
+
             # Verify graph was created
             assert graph is not None
             assert graph.pattern is not None
             assert len(graph.nodes) > 0
-    
+
     @pytest.mark.asyncio
     async def test_guard_validates_tool_with_valid_schema(
-        self,
-        mock_builder_client,
-        sample_project_meta,
-        sample_tools_config,
-        mock_tool_registry
+        self, mock_builder_client, sample_project_meta, sample_tools_config, mock_tool_registry
     ):
         """Test that Guard validates tools with valid schemas."""
         designer = GraphDesigner(mock_builder_client)
-        
-        with patch('src.tools.registry.get_global_registry', return_value=mock_tool_registry):
+
+        with patch("src.tools.registry.get_global_registry", return_value=mock_tool_registry):
             graph = await designer.design_graph(
-                sample_project_meta,
-                tools_config=sample_tools_config
+                sample_project_meta, tools_config=sample_tools_config
             )
-            
+
             # Verify graph was created successfully
             assert graph is not None
             assert len(graph.nodes) > 0
-    
+
     @pytest.mark.asyncio
     async def test_guard_warns_on_missing_schema(
-        self,
-        mock_builder_client,
-        sample_project_meta,
-        mock_tool_registry,
-        capsys
+        self, mock_builder_client, sample_project_meta, mock_tool_registry, capsys
     ):
         """Test that Guard warns when tool schema is missing.
-        
+
         Note: Since the tool is not properly registered in the mock registry,
         it will be reported as 'not found' rather than 'missing schema'.
         This is actually the correct behavior - a tool must be in the registry
@@ -158,67 +133,57 @@ class TestInterfaceGuardIntegration:
         mock_tool_registry._metadata["no_schema_tool"] = ToolMetadata(
             name="no_schema_tool",
             description="Tool without schema",
-            category="test"
+            category="test",
             # No openapi_schema field
         )
-        
+
         tools_config = ToolsConfig(enabled_tools=["no_schema_tool"])
         designer = GraphDesigner(mock_builder_client)
-        
-        with patch('src.tools.registry.get_global_registry', return_value=mock_tool_registry):
-            await designer.design_graph(
-                sample_project_meta,
-                tools_config=tools_config
-            )
-            
+
+        with patch("src.tools.registry.get_global_registry", return_value=mock_tool_registry):
+            await designer.design_graph(sample_project_meta, tools_config=tools_config)
+
             captured = capsys.readouterr()
             # The tool is not in registry, so we get "not found" warning
             assert "⚠️ [Interface Guard] 工具 no_schema_tool 未在注册表中找到" in captured.out
-    
+
     @pytest.mark.asyncio
     async def test_guard_warns_on_unknown_tool(
-        self,
-        mock_builder_client,
-        sample_project_meta,
-        mock_tool_registry,
-        capsys
+        self, mock_builder_client, sample_project_meta, mock_tool_registry, capsys
     ):
         """Test that Guard warns when tool is not in registry."""
         tools_config = ToolsConfig(enabled_tools=["unknown_tool"])
         designer = GraphDesigner(mock_builder_client)
-        
-        with patch('src.tools.registry.get_global_registry', return_value=mock_tool_registry):
-            await designer.design_graph(
-                sample_project_meta,
-                tools_config=tools_config
-            )
-            
+
+        with patch("src.tools.registry.get_global_registry", return_value=mock_tool_registry):
+            await designer.design_graph(sample_project_meta, tools_config=tools_config)
+
             captured = capsys.readouterr()
             assert "⚠️ [Interface Guard] 工具 unknown_tool 未在注册表中找到" in captured.out
 
 
 class TestSampleArgsGeneration:
     """Test sample argument generation."""
-    
+
     def test_generate_sample_args_from_examples(self, mock_builder_client):
         """Test generating sample args from examples."""
         designer = GraphDesigner(mock_builder_client)
-        
+
         metadata = ToolMetadata(
             name="test_tool",
             description="Test",
             examples=[{"query": "example query", "count": 5}],
-            openapi_schema={}
+            openapi_schema={},
         )
-        
+
         args = designer._generate_sample_args("test_tool", metadata)
-        
+
         assert args == {"query": "example query", "count": 5}
-    
+
     def test_generate_sample_args_from_schema(self, mock_builder_client):
         """Test generating sample args from schema."""
         designer = GraphDesigner(mock_builder_client)
-        
+
         metadata = ToolMetadata(
             name="test_tool",
             description="Test",
@@ -227,14 +192,14 @@ class TestSampleArgsGeneration:
                 "properties": {
                     "query": {"type": "string"},
                     "count": {"type": "integer"},
-                    "enabled": {"type": "boolean"}
+                    "enabled": {"type": "boolean"},
                 },
-                "required": ["query", "count"]
-            }
+                "required": ["query", "count"],
+            },
         )
-        
+
         args = designer._generate_sample_args("test_tool", metadata)
-        
+
         assert "query" in args
         assert "count" in args
         assert isinstance(args["query"], str)
@@ -245,17 +210,15 @@ class TestSampleArgsGeneration:
 
 class TestEndToEndFlow:
     """Test complete end-to-end flow."""
-    
+
     @pytest.mark.asyncio
     async def test_complete_agent_creation_with_guard(
-        self,
-        mock_builder_client,
-        mock_tool_registry
+        self, mock_builder_client, mock_tool_registry
     ):
         """Test complete agent creation flow with Interface Guard."""
         # 1. PM analyzes user request
         pm = PM(mock_builder_client)
-        mock_builder_client.call.return_value = '''
+        mock_builder_client.call.return_value = """
         {
             "agent_name": "SearchAgent",
             "description": "An agent that searches the web",
@@ -263,8 +226,8 @@ class TestEndToEndFlow:
             "has_rag": false,
             "complexity_score": 4
         }
-        '''
-        
+        """
+
         # Note: PM.analyze is async but we're mocking it
         project_meta = ProjectMeta(
             agent_name="SearchAgent",
@@ -272,21 +235,18 @@ class TestEndToEndFlow:
             user_intent_summary="Search the web for information",
             task_type="search",
             has_rag=False,
-            complexity_score=4
+            complexity_score=4,
         )
-        
+
         # 2. Select tools
         tools_config = ToolsConfig(enabled_tools=["tavily_search"])
-        
+
         # 3. Design graph with Interface Guard
         designer = GraphDesigner(mock_builder_client)
-        
-        with patch('src.tools.registry.get_global_registry', return_value=mock_tool_registry):
-            graph = await designer.design_graph(
-                project_meta,
-                tools_config=tools_config
-            )
-            
+
+        with patch("src.tools.registry.get_global_registry", return_value=mock_tool_registry):
+            graph = await designer.design_graph(project_meta, tools_config=tools_config)
+
             # Verify graph structure
             assert graph is not None
             assert graph.pattern.pattern_type is not None

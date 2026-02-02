@@ -19,11 +19,11 @@ from src.llm import (
 
 async def test_health_checks():
     """Test API health checks."""
-    
+
     print("=" * 60)
     print("API Health Check Test")
     print("=" * 60)
-    
+
     # Test Builder API (using environment variables or defaults)
     print("\n[1/3] Testing Builder API...")
     builder_config = BuilderAPIConfig(
@@ -35,7 +35,7 @@ async def test_health_checks():
         max_retries=1,
         temperature=0.7,
     )
-    
+
     builder_result = await check_builder_api(builder_config)
     print(f"Status: {builder_result.status.value}")
     print(f"Message: {builder_result.message}")
@@ -43,7 +43,7 @@ async def test_health_checks():
         print(f"Response Time: {builder_result.response_time_ms}ms")
     if builder_result.error:
         print(f"Error: {builder_result.error}")
-    
+
     # Test Runtime API - Ollama (local)
     print("\n[2/3] Testing Runtime API (Ollama)...")
     runtime_config_ollama = RuntimeAPIConfig(
@@ -53,7 +53,7 @@ async def test_health_checks():
         timeout=5,
         temperature=0.7,
     )
-    
+
     runtime_result_ollama = await check_runtime_api(runtime_config_ollama)
     print(f"Status: {runtime_result_ollama.status.value}")
     print(f"Message: {runtime_result_ollama.message}")
@@ -61,7 +61,7 @@ async def test_health_checks():
         print(f"Response Time: {runtime_result_ollama.response_time_ms}ms")
     if runtime_result_ollama.error:
         print(f"Error: {runtime_result_ollama.error}")
-    
+
     # Test Runtime API - OpenAI
     print("\n[3/3] Testing Runtime API (OpenAI)...")
     runtime_config_openai = RuntimeAPIConfig(
@@ -72,7 +72,7 @@ async def test_health_checks():
         timeout=5,
         temperature=0.7,
     )
-    
+
     runtime_result_openai = await check_runtime_api(runtime_config_openai)
     print(f"Status: {runtime_result_openai.status.value}")
     print(f"Message: {runtime_result_openai.message}")
@@ -80,15 +80,13 @@ async def test_health_checks():
         print(f"Response Time: {runtime_result_openai.response_time_ms}ms")
     if runtime_result_openai.error:
         print(f"Error: {runtime_result_openai.error}")
-    
+
     # Test concurrent checks
     print("\n[Bonus] Testing concurrent API checks...")
-    builder_result, runtime_result = await check_all_apis(
-        builder_config, runtime_config_openai
-    )
+    builder_result, runtime_result = await check_all_apis(builder_config, runtime_config_openai)
     print(f"Builder: {builder_result.status.value}")
     print(f"Runtime: {runtime_result.status.value}")
-    
+
     print("\n" + "=" * 60)
     print("✓ Health Check Test Complete!")
     print("=" * 60)

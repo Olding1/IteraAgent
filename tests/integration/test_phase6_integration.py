@@ -26,11 +26,11 @@ from src.core.tool_optimizer import ToolOptimizer
 
 class TestPhase6Integration:
     """Integration tests for Phase 6 complete workflow"""
-    
+
     @pytest.mark.asyncio
     async def test_complete_rag_optimization_flow(self):
         """Test complete flow: Judge → Analyzer → RAG Optimizer"""
-        
+
         # 1. Create test results with RAG failures
         test_results = [
             TestResult(
@@ -38,38 +38,36 @@ class TestPhase6Integration:
                 status=ExecutionStatus.FAILED,
                 error_message="Contextual Recall too low: 0.3",
                 actual_output="Wrong",
-                duration_ms=1000
+                duration_ms=1000,
             ),
             TestResult(
                 test_id="test_2",
                 status=ExecutionStatus.FAILED,
                 error_message="Contextual Recall too low: 0.25",
                 actual_output="Wrong",
-                duration_ms=1000
+                duration_ms=1000,
             ),
             TestResult(
                 test_id="test_3",
                 status=ExecutionStatus.FAILED,
                 error_message="Contextual Recall too low: 0.2",
                 actual_output="Wrong",
-                duration_ms=1000
-            )
+                duration_ms=1000,
+            ),
         ]
-        
+
         exec_result = ExecutionResult(
-            overall_status=ExecutionStatus.FAILED,
-            test_results=test_results,
-            stderr=""
+            overall_status=ExecutionStatus.FAILED, test_results=test_results, stderr=""
         )
-        
+
         # 2. Judge Analysis
         judge = Judge()
         judge_result = judge.analyze_result(exec_result)
-        
+
         # Assert Judge correctly identifies RAG issue
         assert judge_result.error_type == ErrorType.RAG_QUALITY
         assert judge_result.fix_target == FixTarget.RAG_BUILDER
-        
+
         # 3. Create iteration report
         test_cases = [
             TestCaseReport(
@@ -81,10 +79,11 @@ class TestPhase6Integration:
                 expected_output="Correct",
                 retrieval_context=[],
                 error_message=t.error_message,
-                duration_seconds=1.0
-            ) for t in test_results
+                duration_seconds=1.0,
+            )
+            for t in test_results
         ]
-        
+
         report = IterationReport(
             iteration_id=1,
             timestamp=datetime.now(),
@@ -97,12 +96,13 @@ class TestPhase6Integration:
             error_types={},
             judge_feedback="",
             graph_snapshot={},
-            avg_metrics={"contextual_recall": 0.25}
+            avg_metrics={"contextual_recall": 0.25},
         )
-        
+
         # 4. LLM Analysis
         mock_llm = MagicMock()
-        mock_llm.call = AsyncMock(return_value="""{
+        mock_llm.call = AsyncMock(
+            return_value="""{
             "primary_issue": "Low contextual recall",
             "root_cause": "k_retrieval is too small",
             "fix_strategy": [
@@ -116,41 +116,38 @@ class TestPhase6Integration:
                 }
             ],
             "estimated_success_rate": 0.75
-        }""")
-        
+        }"""
+        )
+
         analyzer = TestAnalyzer(mock_llm)
-        config = {
-            "graph": {},
-            "rag": {"k_retrieval": 3},
-            "tools": None
-        }
-        
+        config = {"graph": {}, "rag": {"k_retrieval": 3}, "tools": None}
+
         analysis = await analyzer.analyze_test_report(report, config)
-        
+
         # Assert analysis is correct
         assert "recall" in analysis.primary_issue.lower()
         assert len(analysis.fix_strategy) == 1
         assert analysis.fix_strategy[0].target == "rag_builder"
-        
+
         # 5. RAG Optimization
         current_rag = RAGConfig(k_retrieval=3)
         rag_optimizer = RAGOptimizer(mock_llm)
-        
+
         new_rag = await rag_optimizer.optimize_config(current_rag, analysis, report)
-        
+
         # Assert optimization worked
         assert new_rag.k_retrieval > current_rag.k_retrieval
-        
+
         print(f"✅ Complete flow test passed!")
         print(f"   Judge: {judge_result.error_type} → {judge_result.fix_target}")
         print(f"   Analysis: {analysis.primary_issue}")
         print(f"   Optimization: k_retrieval {current_rag.k_retrieval} → {new_rag.k_retrieval}")
-    
+
     @pytest.mark.asyncio
     async def test_judge_error_classification_coverage(self):
         """Test that Judge covers all error types"""
         judge = Judge()
-        
+
         # Test RAG_QUALITY
         rag_quality_result = ExecutionResult(
             overall_status=ExecutionStatus.FAILED,
@@ -160,16 +157,17 @@ class TestPhase6Integration:
                     status=ExecutionStatus.FAILED,
                     error_message="Contextual Recall low",
                     actual_output="",
-                    duration_ms=100
-                ) for i in range(3)
+                    duration_ms=100,
+                )
+                for i in range(3)
             ],
-            stderr=""
+            stderr="",
         )
-        
+
         result = judge.analyze_result(rag_quality_result)
         assert result.error_type == ErrorType.RAG_QUALITY
         assert result.fix_target == FixTarget.RAG_BUILDER
-        
+
         print("✅ Error classification coverage test passed!")
 
 

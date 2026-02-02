@@ -14,7 +14,7 @@ if not agent_file.exists():
     exit(1)
 
 # Read content
-content = agent_file.read_text(encoding='utf-8')
+content = agent_file.read_text(encoding="utf-8")
 
 # Original problematic collection name
 old_pattern = r'collection_name="AgentZero文档助手_docs"'
@@ -30,9 +30,9 @@ if new_content != content:
     backup_file = agent_dir / "agent.py.backup"
     agent_file.rename(backup_file)
     print(f"✅ Backup created: {backup_file}")
-    
+
     # Write fixed content
-    agent_file.write_text(new_content, encoding='utf-8')
+    agent_file.write_text(new_content, encoding="utf-8")
     print(f"✅ Fixed collection name in: {agent_file}")
     print(f"   Old: AgentZero文档助手_docs")
     print(f"   New: AgentZero______docs")
