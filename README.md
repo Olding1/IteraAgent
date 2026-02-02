@@ -7,8 +7,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Powered-green.svg)](https://github.com/langchain-ai/langgraph)
+[![Status](https://img.shields.io/badge/Status-Demo-orange.svg)](https://github.com/Olding1/Agent_Zero)
 
 *Fully automated AI agent factory with RAG, tool discovery, testing, and self-optimization*
+
+> ⚠️ **Demo Stage**: This project is currently in demo/preview stage. Features are functional but may undergo significant changes. Use in production at your own risk.
 
 [Quick Start](#-quick-start-3-steps) • [Live Demo](#-live-demo) • [Features](#-what-makes-agent-zero-special) • [中文文档](README_CN.md)
 

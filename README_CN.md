@@ -7,8 +7,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Powered-green.svg)](https://github.com/langchain-ai/langgraph)
+[![Status](https://img.shields.io/badge/状态-Demo阶段-orange.svg)](https://github.com/Olding1/Agent_Zero)
 
 *全自动 AI Agent 工厂，集成 RAG、工具发现、测试和自我优化*
+
+> ⚠️ **Demo 阶段**：本项目目前处于 Demo/预览阶段。功能可用但可能会有重大变更。生产环境使用需自行承担风险。
 
 [快速开始](#-快速开始3-步) • [实时演示](#-实时演示创建-rag-助手) • [核心特性](#-agent-zero-的独特之处) • [English](README.md)
 
