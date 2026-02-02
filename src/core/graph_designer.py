@@ -380,8 +380,6 @@ class GraphDesigner:
             ))
         
         return edges
-    
-        return conditional_edges
 
     def _create_conditional_edges_from_template(
         self,
