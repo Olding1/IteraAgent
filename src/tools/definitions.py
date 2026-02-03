@@ -1539,13 +1539,11 @@ CATEGORIES = list(set(tool["category"] for tool in CURATED_TOOLS))
 FREE_TOOLS = [tool for tool in CURATED_TOOLS if not tool["requires_api_key"]]
 API_KEY_TOOLS = [tool for tool in CURATED_TOOLS if tool["requires_api_key"]]
 
-print(
-    f"""
+print(f"""
 📊 Agent Zero v8.0 工具库统计:
 - 总工具数: {TOOL_COUNT}
 - 分类数: {len(CATEGORIES)}
 - 免费工具: {len(FREE_TOOLS)}
 - 需要 API Key: {len(API_KEY_TOOLS)}
 - 分类: {', '.join(CATEGORIES)}
-"""
-)
+""")

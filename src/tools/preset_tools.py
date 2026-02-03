@@ -9,7 +9,6 @@ from langchain_core.tools import BaseTool
 from langchain_community.tools import TavilySearchResults
 from pydantic import BaseModel, Field
 
-
 # ============================================================================
 # Search Tools
 # ============================================================================

@@ -58,7 +58,10 @@ class ExecutionControlPanel:
 
         with col3:
             if st.button(
-                "⏹️ 停止", disabled=(status == "stopped"), type="secondary", use_container_width=True
+                "⏹️ 停止",
+                disabled=(status == "stopped"),
+                type="secondary",
+                use_container_width=True,
             ):
                 runner.stop()
                 st.error("已停止")
