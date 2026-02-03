@@ -1,13 +1,13 @@
 """
 Dify 导出器
 
-提供将 Agent Zero Graph 导出为 Dify YAML 的功能
+提供将 IteraAgent Graph 导出为 Dify YAML 的功能
 """
 
 import yaml
 from pathlib import Path
 from ...schemas.graph_structure import GraphStructure
-from .converter import AgentZeroToDifyConverter
+from .converter import IteraAgentToDifyConverter
 
 
 class DifyExporter:
@@ -27,7 +27,7 @@ class DifyExporter:
             输出文件路径
         """
         # 转换
-        converter = AgentZeroToDifyConverter(graph, agent_name)
+        converter = IteraAgentToDifyConverter(graph, agent_name)
         dify_app = converter.convert()
 
         # 序列化为 YAML
@@ -59,7 +59,7 @@ class DifyExporter:
         Returns:
             YAML 字符串
         """
-        converter = AgentZeroToDifyConverter(graph, agent_name)
+        converter = IteraAgentToDifyConverter(graph, agent_name)
         dify_app = converter.convert()
 
         return yaml.dump(

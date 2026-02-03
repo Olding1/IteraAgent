@@ -130,9 +130,9 @@
 
 ## 贡献者
 
-感谢所有为 Agent Zero 做出贡献的开发者！
+感谢所有为 IteraAgent 做出贡献的开发者！
 
 ---
 
-[Unreleased]: https://github.com/yourusername/Agent_Zero/compare/v8.0.0...HEAD
-[8.0.0]: https://github.com/yourusername/Agent_Zero/releases/tag/v8.0.0
+[Unreleased]: https://github.com/Olding1/IteraAgent/compare/v8.0.0...HEAD
+[8.0.0]: https://github.com/Olding1/IteraAgent/releases/tag/v8.0.0

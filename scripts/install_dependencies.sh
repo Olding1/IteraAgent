@@ -1,5 +1,5 @@
 #!/bin/bash
-# Agent Zero v8.0 - Phase 5 依赖一键安装脚本 (Linux/Mac)
+# IteraAgent v8.0 - Phase 5 依赖一键安装脚本 (Linux/Mac)
 
 # 颜色定义
 GREEN='\033[0;32m'
@@ -9,7 +9,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo "============================================================"
-echo -e "${BLUE}   Agent Zero v8.0 - Phase 5 依赖安装${NC}"
+echo -e "${BLUE}   IteraAgent v8.0 - Phase 5 依赖安装${NC}"
 echo "============================================================"
 echo ""
 

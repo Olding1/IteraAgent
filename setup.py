@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Agent Zero 一键安装脚本
+IteraAgent 一键安装脚本
 自动安装所有依赖并配置环境
 """
 
@@ -263,14 +263,14 @@ def print_next_steps():
     """打印后续步骤"""
     print_header("安装完成！")
 
-    print(f"{Colors.OKGREEN}🎉 Agent Zero 已成功安装！{Colors.ENDC}\n")
+    print(f"{Colors.OKGREEN}🎉 IteraAgent 已成功安装！{Colors.ENDC}\n")
 
     print(f"{Colors.BOLD}后续步骤:{Colors.ENDC}\n")
 
     print(f"{Colors.OKCYAN}1. 配置 API 密钥{Colors.ENDC}")
     print(f"   编辑 .env 文件，填入你的 API 密钥\n")
 
-    print(f"{Colors.OKCYAN}2. 启动 Agent Zero{Colors.ENDC}")
+    print(f"{Colors.OKCYAN}2. 启动 IteraAgent{Colors.ENDC}")
     print(f"   {Colors.BOLD}CLI 模式:{Colors.ENDC}")
     print(f"   python start.py\n")
 
@@ -287,14 +287,14 @@ def print_next_steps():
     print(f"   docs/ - 详细文档\n")
 
     print(f"{Colors.BOLD}需要帮助?{Colors.ENDC}")
-    print(f"   GitHub Issues: https://github.com/yourusername/Agent_Zero/issues\n")
+    print(f"   GitHub Issues: https://github.com/Olding1/IteraAgent/issues\n")
 
 
 def main():
     """主函数"""
-    print_header("Agent Zero 一键安装")
+    print_header("IteraAgent 一键安装")
 
-    print(f"{Colors.BOLD}欢迎使用 Agent Zero 安装向导！{Colors.ENDC}")
+    print(f"{Colors.BOLD}欢迎使用 IteraAgent 安装向导！{Colors.ENDC}")
     print(f"此脚本将自动安装所有依赖并配置环境\n")
 
     # 检查 Python 版本

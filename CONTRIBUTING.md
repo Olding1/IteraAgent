@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢你对 Agent Zero 的关注！我们欢迎所有形式的贡献。
+感谢你对 IteraAgent 的关注！我们欢迎所有形式的贡献。
 
 ## 🤝 如何贡献
 
@@ -8,7 +8,7 @@
 
 如果你发现了 bug，请：
 
-1. 检查 [Issues](https://github.com/yourusername/Agent_Zero/issues) 是否已有相关报告
+1. 检查 [Issues](https://github.com/Olding1/IteraAgent/issues) 是否已有相关报告
 2. 如果没有，创建新 Issue，包含：
    - 清晰的标题
    - 详细的描述
@@ -19,7 +19,7 @@
 
 ### 提出新功能
 
-1. 先在 [Discussions](https://github.com/yourusername/Agent_Zero/discussions) 讨论
+1. 先在 [Discussions](https://github.com/Olding1/IteraAgent/discussions) 讨论
 2. 获得认可后，创建 Feature Request Issue
 3. 等待维护者反馈
 
@@ -131,8 +131,8 @@ pytest --cov=src tests/
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/yourusername/Agent_Zero.git
-cd Agent_Zero
+git clone https://github.com/Olding1/IteraAgent.git
+cd IteraAgent
 ```
 
 ### 2. 创建虚拟环境
@@ -205,8 +205,8 @@ Pull Request 会经过以下检查：
 ## ❓ 问题？
 
 - 查看 [文档](docs/)
-- 搜索 [Issues](https://github.com/yourusername/Agent_Zero/issues)
-- 在 [Discussions](https://github.com/yourusername/Agent_Zero/discussions) 提问
+- 搜索 [Issues](https://github.com/Olding1/IteraAgent/issues)
+- 在 [Discussions](https://github.com/Olding1/IteraAgent/discussions) 提问
 
 ## 📜 行为准则
 
@@ -217,7 +217,7 @@ Pull Request 会经过以下检查：
 
 ## 🙏 致谢
 
-感谢所有贡献者！你们的贡献让 Agent Zero 变得更好。
+感谢所有贡献者！你们的贡献让 IteraAgent 变得更好。
 
 ---
 

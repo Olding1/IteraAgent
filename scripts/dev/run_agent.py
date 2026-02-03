@@ -10,7 +10,7 @@ def main():
     """Run a generated agent."""
 
     print("=" * 70)
-    print("🤖 Agent Zero - Agent Runner")
+    print("🤖 IteraAgent - Agent Runner")
     print("=" * 70)
 
     # Check for agents

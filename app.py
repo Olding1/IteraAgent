@@ -1,5 +1,5 @@
 """
-Agent Zero v8.0 - 完整功能 Streamlit UI
+IteraAgent v8.0 - 完整功能 Streamlit UI
 
 集成 start.py 的所有功能：
 - 系统健康检查
@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 # Page config
 st.set_page_config(
-    page_title="Agent Zero v8.0", page_icon="🤖", layout="wide", initial_sidebar_state="expanded"
+    page_title="IteraAgent v8.0", page_icon="🤖", layout="wide", initial_sidebar_state="expanded"
 )
 
 # Initialize session state
@@ -49,7 +49,7 @@ def run_async(coro):
 # Sidebar Navigation
 # ============================================================
 with st.sidebar:
-    st.title("🤖 Agent Zero v8.0")
+    st.title("🤖 IteraAgent v8.0")
     st.markdown("---")
 
     # Navigation
@@ -81,13 +81,13 @@ with st.sidebar:
 # Page: 首页
 # ============================================================
 if page == "🏠 首页":
-    st.title("🏠 Agent Zero 控制中心")
+    st.title("🏠 IteraAgent 控制中心")
     st.markdown("---")
 
     # Welcome message
     st.markdown(
         """
-    ### 欢迎使用 Agent Zero v8.0！
+    ### 欢迎使用 IteraAgent v8.0！
 
     这是一个完整的 Agent 构建和管理平台，提供：
     - 🏗️ Agent 创建和优化
@@ -726,7 +726,7 @@ elif page == "⚙️ 设置":
     st.subheader("ℹ️ 关于")
     st.markdown(
         """
-    **Agent Zero v8.0**
+    **IteraAgent v8.0**
 
     智能 Agent 构建和管理平台
 
@@ -756,7 +756,7 @@ elif page == "⚙️ 设置":
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: gray;'>"
-    "🤖 Agent Zero v8.0 | Built with ❤️ using Streamlit"
+    "🤖 IteraAgent v8.0 | Built with ❤️ using Streamlit"
     "</div>",
     unsafe_allow_html=True,
 )

@@ -2,7 +2,7 @@
 REM Streamlit UI 启动脚本 (Windows)
 
 echo ============================================================
-echo    启动 Agent Zero Streamlit UI
+echo    启动 IteraAgent Streamlit UI
 echo ============================================================
 echo.
 

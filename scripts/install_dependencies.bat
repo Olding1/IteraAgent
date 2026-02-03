@@ -1,8 +1,8 @@
 @echo off
-REM Agent Zero v8.0 - Phase 5 依赖一键安装脚本 (Windows)
+REM IteraAgent v8.0 - Phase 5 依赖一键安装脚本 (Windows)
 
 echo ============================================================
-echo    Agent Zero v8.0 - Phase 5 依赖安装
+echo    IteraAgent v8.0 - Phase 5 依赖安装
 echo ============================================================
 echo.
 

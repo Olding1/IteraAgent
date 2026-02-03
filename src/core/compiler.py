@@ -419,7 +419,7 @@ class Compiler:
                     "deepeval>=0.21.0",
                     "pytest>=7.4.0",
                     "pytest-json-report>=1.5.0",
-                    "langchain-community>=0.2.0",  # Required for AgentZeroJudge adapters
+                    "langchain-community>=0.2.0",  # Required for IteraAgentJudge adapters
                 ]
             )
 
@@ -431,7 +431,7 @@ class Compiler:
         Returns:
             Environment template content as string
         """
-        return """# Agent Zero - Generated Agent Configuration
+        return """# IteraAgent - Generated Agent Configuration
 # ==========================================
 
 # Runtime API Configuration (用于生成的 Agent 运行时)
@@ -471,7 +471,7 @@ JUDGE_TEMPERATURE=0.0
         def get_val(key, default):
             return os.getenv(key, default)
 
-        return f"""# Agent Zero - Auto-generated Configuration
+        return f"""# IteraAgent - Auto-generated Configuration
 # Generated from system configuration on {datetime.now().isoformat()}
 # This file is auto-populated with your current environment settings.
 
@@ -518,10 +518,10 @@ trusted-host = pypi.tuna.tsinghua.edu.cn
             install.sh content as string
         """
         return """#!/bin/bash
-# Agent Zero - 依赖安装脚本 (Linux/Mac)
+# IteraAgent - 依赖安装脚本 (Linux/Mac)
 
 echo "=========================================="
-echo "Agent Zero - 依赖安装"
+echo "IteraAgent - 依赖安装"
 echo "=========================================="
 echo ""
 echo "使用清华大学镜像源加速下载..."
@@ -581,10 +581,10 @@ fi
             install.bat content as string
         """
         return """@echo off
-REM Agent Zero - 依赖安装脚本 (Windows)
+REM IteraAgent - 依赖安装脚本 (Windows)
 
 echo ==========================================
-echo Agent Zero - 依赖安装
+echo IteraAgent - 依赖安装
 echo ==========================================
 echo.
 echo 使用清华大学镜像源加速下载...

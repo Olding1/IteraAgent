@@ -1,5 +1,5 @@
 """
-Configuration utilities for Agent Zero v7.0.
+Configuration utilities for IteraAgent v7.0.
 
 Provides atomic file writing to prevent configuration corruption during runtime updates.
 """

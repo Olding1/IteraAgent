@@ -1,4 +1,4 @@
-"""Tool index builder for Agent Zero v8.0.
+"""Tool index builder for IteraAgent v8.0.
 
 This script generates the tools_index.json file from the curated tool definitions.
 """

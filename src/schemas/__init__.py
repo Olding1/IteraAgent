@@ -1,4 +1,4 @@
-"""Schema definitions for Agent Zero."""
+"""Schema definitions for IteraAgent."""
 
 from .project_meta import ProjectMeta, TaskType, ExecutionStep
 from .graph_structure import (

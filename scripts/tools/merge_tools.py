@@ -42,7 +42,7 @@ def merge_tools():
     print(f"Total tools: {len(merged_tools)}")
 
     # Generate python file content
-    content = '"""Curated tool definitions for Agent Zero v8.0.\n\n'
+    content = '"""Curated tool definitions for IteraAgent v8.0.\n\n'
     content += "This module contains a comprehensive list of tools from LangChain Community,\n"
     content += "including both hand-picked curated tools and auto-discovered ones.\n"
     content += '"""\n\n'
@@ -66,7 +66,7 @@ FREE_TOOLS = [tool for tool in CURATED_TOOLS if not tool["requires_api_key"]]
 API_KEY_TOOLS = [tool for tool in CURATED_TOOLS if tool["requires_api_key"]]
 
 print(f\"\"\"
-📊 Agent Zero v8.0 工具库统计:
+📊 IteraAgent v8.0 工具库统计:
 - 总工具数: {TOOL_COUNT}
 - 分类数: {len(CATEGORIES)}
 - 免费工具: {len(FREE_TOOLS)}

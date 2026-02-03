@@ -1,5 +1,5 @@
 """
-Agent Zero v8.0 - Chat 模式 Streamlit UI
+IteraAgent v8.0 - Chat 模式 Streamlit UI
 
 使用 Chat 界面模拟 CLI 交互，实现完整的 Agent 创建流程
 """
@@ -15,7 +15,7 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Page config
-st.set_page_config(page_title="Agent Zero v8.0 - Chat Mode", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="IteraAgent v8.0 - Chat Mode", page_icon="🤖", layout="wide")
 
 # Initialize session state
 if "messages" not in st.session_state:
@@ -51,7 +51,7 @@ def run_async(coro):
 # Main UI
 # ============================================================
 
-st.title("🤖 Agent Zero v8.0 - Chat 模式")
+st.title("🤖 IteraAgent v8.0 - Chat 模式")
 st.markdown("---")
 
 # Sidebar
@@ -59,7 +59,7 @@ with st.sidebar:
     st.subheader("💬 Chat 模式")
     st.markdown(
         """
-    使用聊天界面与 Agent Zero 交互：
+    使用聊天界面与 IteraAgent 交互：
 
     - 🏗️ 创建 Agent
     - 📦 管理 Agent
@@ -96,7 +96,7 @@ for message in st.session_state.messages:
 # Welcome message
 if len(st.session_state.messages) == 0:
     welcome_msg = """
-👋 欢迎使用 Agent Zero v8.0！
+👋 欢迎使用 IteraAgent v8.0！
 
 我可以帮你：
 - 🏗️ 创建新的 Agent
@@ -351,7 +351,7 @@ python start.py
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: gray;'>"
-    "🤖 Agent Zero v8.0 Chat Mode | 输入 /help 查看帮助"
+    "🤖 IteraAgent v8.0 Chat Mode | 输入 /help 查看帮助"
     "</div>",
     unsafe_allow_html=True,
 )

@@ -29,7 +29,7 @@ assignees: ''
 **环境信息：**
  - OS: [例如 Windows 11, Ubuntu 22.04, macOS 13]
  - Python 版本: [例如 3.8, 3.9, 3.10]
- - Agent Zero 版本: [例如 8.0.0]
+ - IteraAgent 版本: [例如 8.0.0]
  - 安装方式: [例如 pip, git clone]
 
 **日志**

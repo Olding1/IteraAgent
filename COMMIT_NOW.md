@@ -95,7 +95,7 @@ git push origin master
 ## 💡 验证方式
 
 ### 1. 查看 GitHub Actions
-访问: `https://github.com/Olding1/Agent_Zero/actions`
+访问: `https://github.com/Olding1/IteraAgent/actions`
 
 ### 2. 等待 CI 完成
 - 预计时间: 10-15 分钟
@@ -159,5 +159,7 @@ pytest tests/ -v --timeout=300
 - `docs/CI_FIX_SUMMARY.md` - 初步修复总结
 - `docs/CI_FIX_FINAL_REPORT.md` - 完整技术报告
 - `COMMIT_NOW.md` - 本文件（提交指南）
+
+
 
 

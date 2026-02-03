@@ -1,7 +1,7 @@
 """
 节点映射器
 
-将 Agent Zero 节点映射为 Dify 节点
+将 IteraAgent 节点映射为 Dify 节点
 """
 
 from typing import Dict
@@ -10,7 +10,7 @@ from .schema import DifyNode, DifyNodeData
 
 
 class NodeMapper:
-    """Agent Zero -> Dify 节点映射器"""
+    """IteraAgent -> Dify 节点映射器"""
 
     # 工具名称映射表
     TOOL_MAPPING = {
@@ -44,7 +44,7 @@ class NodeMapper:
         映射 LLM 节点
 
         Args:
-            node: Agent Zero 节点定义
+            node: IteraAgent 节点定义
             node_id: Dify 节点 ID
             position: 节点位置
 
@@ -77,7 +77,7 @@ class NodeMapper:
         我们将 RAG 节点转换为 Code 节点，提示用户手动配置。
 
         Args:
-            node: Agent Zero 节点定义
+            node: IteraAgent 节点定义
             node_id: Dify 节点 ID
             position: 节点位置
 
@@ -104,7 +104,7 @@ class NodeMapper:
         映射工具节点
 
         Args:
-            node: Agent Zero 节点定义
+            node: IteraAgent 节点定义
             node_id: Dify 节点 ID
             position: 节点位置
 
@@ -136,7 +136,7 @@ class NodeMapper:
                 data=DifyNodeData(
                     title=f"⚠️ Unsupported Tool: {tool_name}",
                     type="code",
-                    desc=f"Agent Zero 使用了 {tool_name}，但 Dify 不支持。请手动替换为等效工具。",
+                    desc=f"IteraAgent 使用了 {tool_name}，但 Dify 不支持。请手动替换为等效工具。",
                     code=f"# TODO: 替换为 Dify 支持的工具\n# 原工具: {tool_name}\nresult = 'Not implemented'",
                     outputs={"result": {"type": "string", "children": None}},
                 ),
@@ -151,7 +151,7 @@ class NodeMapper:
         映射条件节点
 
         Args:
-            node: Agent Zero 节点定义
+            node: IteraAgent 节点定义
             node_id: Dify 节点 ID
             position: 节点位置
 
@@ -175,7 +175,7 @@ class NodeMapper:
         映射自定义节点
 
         Args:
-            node: Agent Zero 节点定义
+            node: IteraAgent 节点定义
             node_id: Dify 节点 ID
             position: 节点位置
 

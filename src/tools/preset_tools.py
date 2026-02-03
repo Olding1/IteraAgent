@@ -1,4 +1,4 @@
-"""Preset tools for Agent Zero.
+"""Preset tools for IteraAgent.
 
 This module contains commonly used tools that can be registered
 in the tool registry.

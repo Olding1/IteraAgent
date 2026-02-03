@@ -98,7 +98,7 @@ class TestGenerator:
     def _generate_imports(self, config: DeepEvalTestConfig) -> str:
         """生成导入语句"""
         return f'''"""
-Auto-generated DeepEval tests by Agent Zero
+Auto-generated DeepEval tests by IteraAgent
 Generated with DeepEval v{config.deepeval_version}
 """
 from deepeval import assert_test
@@ -137,8 +137,8 @@ import os
 from deepeval.models import DeepEvalBaseLLM
 from langchain_community.chat_models import ChatOpenAI, ChatOllama
 
-class AgentZeroJudge(DeepEvalBaseLLM):
-    """统一的 Agent Zero 评判模型适配器
+class IteraAgentJudge(DeepEvalBaseLLM):
+    """统一的 IteraAgent 评判模型适配器
     
     支持:
     1. OpenAI 兼容接口 (DeepSeek, GPT-4) - 优先
@@ -185,7 +185,7 @@ class AgentZeroJudge(DeepEvalBaseLLM):
         return self.model_name
 
 # 全局评判实例
-judge_llm = AgentZeroJudge()
+judge_llm = IteraAgentJudge()
 '''
         else:
             return """

@@ -349,7 +349,7 @@ class AgentFactory:
             # Create a sample input for simulation
             # Create a sample input for simulation based on task type and tools
             if meta.has_rag:
-                sample_input = "Agent Zero 是什么项目？"  # Trigger RAG keywords
+                sample_input = "IteraAgent 是什么项目？"  # Trigger RAG keywords
             elif tools_config and tools_config.enabled_tools:
                 # Check for search tools specifically
                 search_tools = [

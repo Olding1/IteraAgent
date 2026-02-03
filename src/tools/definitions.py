@@ -1,4 +1,4 @@
-"""Curated tool definitions for Agent Zero v8.0.
+"""Curated tool definitions for IteraAgent v8.0.
 
 This module contains a comprehensive list of tools from LangChain Community,
 including both hand-picked curated tools and auto-discovered ones.
@@ -20,7 +20,7 @@ CURATED_TOOLS = [
             "properties": {"query": {"type": "string", "description": "搜索查询关键词"}},
             "required": ["query"],
         },
-        "examples": [{"query": "Agent Zero 是什么"}, {"query": "Python 最新版本"}],
+        "examples": [{"query": "IteraAgent 是什么"}, {"query": "Python 最新版本"}],
     },
     {
         "id": "tavily_search",
@@ -1540,7 +1540,7 @@ FREE_TOOLS = [tool for tool in CURATED_TOOLS if not tool["requires_api_key"]]
 API_KEY_TOOLS = [tool for tool in CURATED_TOOLS if tool["requires_api_key"]]
 
 print(f"""
-📊 Agent Zero v8.0 工具库统计:
+📊 IteraAgent v8.0 工具库统计:
 - 总工具数: {TOOL_COUNT}
 - 分类数: {len(CATEGORIES)}
 - 免费工具: {len(FREE_TOOLS)}

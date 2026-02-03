@@ -1,0 +1,88 @@
+app:
+  name: 带搜索的AI助手
+  mode: advanced-chat
+  icon: 🤖
+  description: 带搜索的 AI 助手
+  use_icon_as_answer_icon: false
+kind: app
+version: 0.1.0
+workflow:
+  graph:
+    nodes:
+    - id: '1'
+      data:
+        title: 开始
+        type: start
+        desc: ''
+        selected: false
+        variables:
+        - variable: query
+          type: text-input
+          label: 用户输入
+          required: true
+      position:
+        x: 0
+        y: 100
+      sourcePosition: right
+      targetPosition: left
+      width: 240
+      height: 90
+    - id: '2'
+      data:
+        title: agent
+        type: llm
+        desc: AI 助手
+        selected: false
+        model:
+          provider: openai
+          name: gpt-4o
+        prompt_template:
+        - role: system
+          text: AI 助手
+      position:
+        x: 300
+        y: 100
+      sourcePosition: right
+      targetPosition: left
+      width: 240
+      height: 90
+    - id: '3'
+      data:
+        title: tavily_search
+        type: tool
+        desc: ''
+        selected: false
+        provider_id: tavily
+        tool_name: tavily_search
+        tool_parameters: {}
+      position:
+        x: 600
+        y: 100
+      sourcePosition: right
+      targetPosition: left
+      width: 240
+      height: 90
+    - id: '4'
+      data:
+        title: 回答
+        type: answer
+        desc: ''
+        selected: false
+        answer: '{{#llm.text#}}'
+      position:
+        x: 900
+        y: 100
+      sourcePosition: right
+      targetPosition: left
+      width: 240
+      height: 90
+    edges:
+    - id: edge_1
+      source: '1'
+      target: '2'
+      type: default
+    - id: edge_2
+      source: '2'
+      target: '3'
+      type: default
+  version: 0.1.0

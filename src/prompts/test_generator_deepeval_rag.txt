@@ -23,8 +23,8 @@
 ```json
 [
   {{
-    "question": "Agent Zero 的核心目标是什么?",
-    "expected_answer": "Agent Zero 的核心目标是打造一个智能体构建工厂,通过自然语言需求自动生成可执行的 LangGraph Agent。",
+    "question": "IteraAgent 的核心目标是什么?",
+    "expected_answer": "IteraAgent 的核心目标是打造一个智能体构建工厂,通过自然语言需求自动生成可执行的 LangGraph Agent。",
     "source_section": "项目愿景"
   }},
   {{

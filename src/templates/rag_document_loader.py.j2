@@ -107,7 +107,7 @@ print("=" * 60)
 
 # 1. 始终加载和分割文档 (Critical for Hybrid Search BM25)
 # 即使向量库已有数据，我们也由于需要 splits 来初始化 BM25 Retriver
-# (除非我们将 BM25 索引也序列化了，但目前 Agent Zero 尚未实现 BM25 序列化)
+# (除非我们将 BM25 索引也序列化了，但目前 IteraAgent 尚未实现 BM25 序列化)
 try:
     documents = load_documents({{ file_paths }})
     if documents:

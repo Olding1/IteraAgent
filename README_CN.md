@@ -1,29 +1,29 @@
 <div align="center">
 
-# 🤖 Agent Zero
+# 🤖 IteraAgent
 
 **一键 Agent 工厂：从想法到生产，只需几分钟**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Powered-green.svg)](https://github.com/langchain-ai/langgraph)
-[![Status](https://img.shields.io/badge/状态-Demo阶段-orange.svg)](https://github.com/Olding1/Agent_Zero)
+[![Status](https://img.shields.io/badge/状态-Demo阶段-orange.svg)](https://github.com/Olding1/IteraAgent)
 
 *全自动 AI Agent 工厂，集成 RAG、工具发现、测试和自我优化*
 
 > ⚠️ **Demo 阶段**：本项目目前处于 Demo/预览阶段。功能可用但可能会有重大变更。生产环境使用需自行承担风险。
 
-[快速开始](#-快速开始3-步) • [实时演示](#-实时演示创建-rag-助手) • [核心特性](#-agent-zero-的独特之处) • [English](README.md)
+[快速开始](#-快速开始3-步) • [实时演示](#-实时演示创建-rag-助手) • [核心特性](#-itera-agent-的独特之处) • [English](README.md)
 
 </div>
 
 ---
 
-## 🎯 Agent Zero 的独特之处
+## 🎯 IteraAgent 的独特之处
 
 ### 全自动化流水线
 
-Agent Zero 是**唯一**能够自动化整个 Agent 生命周期的平台：
+IteraAgent 是**唯一**能够自动化整个 Agent 生命周期的平台：
 
 ```
 你的想法 → AI 分析 → 自动构建 → 自动测试 → 自动优化 → 生产就绪
@@ -61,8 +61,8 @@ $ python start.py
 ### 步骤 1：安装和配置
 
 ```bash
-git clone https://github.com/Olding1/Agent_Zero.git
-cd Agent_Zero
+git clone https://github.com/Olding1/IteraAgent.git
+cd IteraAgent
 python setup.py  # 自动安装所有内容 + 配置 API 密钥
 ```
 
@@ -86,7 +86,7 @@ python start.py --lang zh  # 或 --lang en 使用英文
 
 ### 步骤 3：见证魔法
 
-Agent Zero 将自动：
+IteraAgent 将自动：
 
 1. **PM 分析** - 理解需求，提出澄清问题
 2. **资源配置** - 从 114+ 选项中选择 RAG + 工具
@@ -105,7 +105,7 @@ Agent Zero 将自动：
 ```bash
 $ python start.py
 
-🚀 Agent Zero v8.0 - 智能 Agent 构建工厂
+🚀 IteraAgent v8.0 - 智能 Agent 构建工厂
    🆕 Interface Guard | 🔍 Tool Discovery | 📚 114+ Tools
 
 📊 系统健康检查
@@ -125,10 +125,10 @@ $ python start.py
 ===================================
 
 请输入您想构建的 Agent 描述:
-> 一个专为 Agent Zero 项目设计的 RAG 问答助手
+> 一个专为 IteraAgent 项目设计的 RAG 问答助手
 
 是否有参考文件/文档? (逗号分隔路径，或留空):
-> docs/Agent_Zero_详细实施计划.md,docs/Agent Zero项目计划书.md
+> docs/IteraAgent_详细实施计划.md,docs/IteraAgent项目计划书.md
 
 开始构建... (这可能需要几分钟)
 
@@ -206,7 +206,7 @@ $ python start.py
 
 ### 1. 智能 RAG 流水线
 
-Agent Zero 不只是把文档扔进向量数据库。它会：
+IteraAgent 不只是把文档扔进向量数据库。它会：
 
 - **分析**文档结构和内容类型
 - **剖析**数据特征（长度、复杂度、语言）
@@ -219,7 +219,7 @@ Agent Zero 不只是把文档扔进向量数据库。它会：
 
 ### 2. 工具发现引擎
 
-忘记手动选择工具。Agent Zero 拥有：
+忘记手动选择工具。IteraAgent 拥有：
 
 - **114+ 精选工具**来自 LangChain Community
 - **语义搜索**将你的需求匹配到工具
@@ -238,7 +238,7 @@ Agent Zero 不只是把文档扔进向量数据库。它会：
 
 ### 3. 自我优化循环
 
-当测试失败时，Agent Zero 不会放弃。它会：
+当测试失败时，IteraAgent 不会放弃。它会：
 
 ```mermaid
 graph LR
@@ -326,7 +326,7 @@ graph TB
 
 ### 示例 1：AgentZero_RAG_Assistant
 
-**用途**：回答关于 Agent Zero 项目文档的问题
+**用途**：回答关于 IteraAgent 项目文档的问题
 
 **配置**：
 - **模式**：Plan-Execute + RAG
@@ -341,7 +341,7 @@ graph TB
 
 **示例问答**：
 ```
-问：Agent Zero 的 Slogan 是什么？
+问：IteraAgent 的 Slogan 是什么？
 答：Define logic, simulate graph, auto-deploy.（定义逻辑，仿真图谱，自动部署）
    来源：项目计划文档，第 1.1 节
 ```
@@ -458,7 +458,7 @@ RUNTIME_BASE_URL=https://api.openai.com/v1
 
 ## 🔄 高级：迭代优化
 
-如果你的 Agent 第一次没有通过测试，Agent Zero 会自动优化：
+如果你的 Agent 第一次没有通过测试，IteraAgent 会自动优化：
 
 ```bash
 $ python start.py
@@ -561,18 +561,18 @@ ruff check src/
 
 ## 📞 支持
 
-- **问题反馈**：[GitHub Issues](https://github.com/Olding1/Agent_Zero/issues)
-- **讨论交流**：[GitHub Discussions](https://github.com/Olding1/Agent_Zero/discussions)
+- **问题反馈**：[GitHub Issues](https://github.com/Olding1/IteraAgent/issues)
+- **讨论交流**：[GitHub Discussions](https://github.com/Olding1/IteraAgent/discussions)
 - **文档**：[docs/](docs/)
 
 ---
 
 <div align="center">
 
-**由 Agent Zero 团队用 ❤️ 构建**
+**由 IteraAgent 团队用 ❤️ 构建**
 
 如果这个项目对你有帮助，请给我们一个 ⭐️
 
-[⬆ 回到顶部](#-agent-zero)
+[⬆ 回到顶部](#-iteraagent)
 
 </div>

@@ -1,5 +1,5 @@
 """
-i18n - Internationalization module for Agent Zero
+i18n - Internationalization module for IteraAgent
 
 Provides translation support for Chinese and English.
 """
@@ -11,7 +11,7 @@ _CURRENT_LANG = "zh"  # Default to Chinese
 TRANSLATIONS = {
     "zh": {
         # Banner and startup
-        "banner": "🚀 Agent Zero v8.0 - 智能 Agent 构建工厂",
+        "banner": "🚀 IteraAgent v8.0 - 智能 Agent 构建工厂",
         "banner_subtitle": "   🆕 Interface Guard | 🔍 Tool Discovery | 📚 114+ Tools",
         "select_language": "Select Language / 选择语言",
         "language_chinese": "1. 中文 (Chinese)",
@@ -117,7 +117,7 @@ TRANSLATIONS = {
     },
     "en": {
         # Banner and startup
-        "banner": "🚀 Agent Zero v8.0 - Intelligent Agent Factory",
+        "banner": "🚀 IteraAgent v8.0 - Intelligent Agent Factory",
         "banner_subtitle": "   🆕 Interface Guard | 🔍 Tool Discovery | 📚 114+ Tools",
         "select_language": "Select Language / 选择语言",
         "language_chinese": "1. 中文 (Chinese)",

@@ -2,7 +2,7 @@
 REM Chat UI 启动脚本 (Windows)
 
 echo ============================================================
-echo    启动 Agent Zero Chat UI
+echo    启动 IteraAgent Chat UI
 echo ============================================================
 echo.
 

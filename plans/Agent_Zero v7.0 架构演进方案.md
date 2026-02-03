@@ -2,7 +2,7 @@
 
 ---
 
-# 🚀 Agent_Zero v7.0 架构演进方案：动态运行时与自进化引擎
+# 🚀 IteraAgent v7.0 架构演进方案：动态运行时与自进化引擎
 
 ## 一、 核心哲学变革 (Core Philosophy Shift)
 

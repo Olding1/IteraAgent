@@ -1,29 +1,29 @@
 <div align="center">
 
-# 🤖 Agent Zero
+# 🤖 IteraAgent
 
 **One-Command Agent Factory: From Idea to Production in Minutes**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Powered-green.svg)](https://github.com/langchain-ai/langgraph)
-[![Status](https://img.shields.io/badge/Status-Demo-orange.svg)](https://github.com/Olding1/Agent_Zero)
+[![Status](https://img.shields.io/badge/Status-Demo-orange.svg)](https://github.com/Olding1/IteraAgent)
 
 *Fully automated AI agent factory with RAG, tool discovery, testing, and self-optimization*
 
 > ⚠️ **Demo Stage**: This project is currently in demo/preview stage. Features are functional but may undergo significant changes. Use in production at your own risk.
 
-[Quick Start](#-quick-start-3-steps) • [Live Demo](#-live-demo) • [Features](#-what-makes-agent-zero-special) • [中文文档](README_CN.md)
+[Quick Start](#-quick-start-3-steps) • [Live Demo](#-live-demo) • [Features](#-what-makes-itera-agent-special) • [中文文档](README_CN.md)
 
 </div>
 
 ---
 
-## 🎯 What Makes Agent Zero Special?
+## 🎯 What Makes IteraAgent Special?
 
 ### Fully Automated Pipeline
 
-Agent Zero is the **only** platform that automates the entire agent lifecycle:
+IteraAgent is the **only** platform that automates the entire agent lifecycle:
 
 ```
 Your Idea → AI Analysis → Auto-Build → Auto-Test → Auto-Optimize → Production Ready
@@ -61,8 +61,8 @@ $ python start.py
 ### Step 1: Install & Configure
 
 ```bash
-git clone https://github.com/Olding1/Agent_Zero.git
-cd Agent_Zero
+git clone https://github.com/Olding1/IteraAgent.git
+cd IteraAgent
 python setup.py  # Auto-installs everything + configures API keys
 ```
 
@@ -86,7 +86,7 @@ Select option **1. Create New Agent**, then describe what you want:
 
 ### Step 3: Watch the Magic
 
-Agent Zero will automatically:
+IteraAgent will automatically:
 
 1. **PM Analysis** - Understands requirements, asks clarifying questions
 2. **Resource Config** - Selects RAG + tools from 114+ options
@@ -105,7 +105,7 @@ Here's what happens when you create an agent:
 ```bash
 $ python start.py
 
-🚀 Agent Zero v8.0 - Intelligent Agent Factory
+🚀 IteraAgent v8.0 - Intelligent Agent Factory
    🆕 Interface Guard | 🔍 Tool Discovery | 📚 114+ Tools
 
 📊 System Health Check
@@ -125,10 +125,10 @@ Please select (1-9): 1
 ===================================
 
 Please describe the Agent you want to build:
-> RAG assistant for Agent Zero project docs
+> RAG assistant for IteraAgent project docs
 
 Any reference files/documents? (comma-separated paths):
-> docs/Agent_Zero_详细实施计划.md,docs/Agent Zero项目计划书.md
+> docs/IteraAgent_详细实施计划.md,docs/IteraAgent项目计划书.md
 
 Starting build... (this may take a few minutes)
 
@@ -206,7 +206,7 @@ Commands:
 
 ### 1. Intelligent RAG Pipeline
 
-Agent Zero doesn't just throw your documents into a vector database. It:
+IteraAgent doesn't just throw your documents into a vector database. It:
 
 - **Analyzes** document structure and content type
 - **Profiles** data characteristics (length, complexity, language)
@@ -219,7 +219,7 @@ Agent Zero doesn't just throw your documents into a vector database. It:
 
 ### 2. Tool Discovery Engine
 
-Forget manual tool selection. Agent Zero has:
+Forget manual tool selection. IteraAgent has:
 
 - **114+ Curated Tools** from LangChain Community
 - **Semantic Search** matches your needs to tools
@@ -238,7 +238,7 @@ Query: "Search latest AI news"
 
 ### 3. Self-Optimizing Loop
 
-When tests fail, Agent Zero doesn't give up. It:
+When tests fail, IteraAgent doesn't give up. It:
 
 ```mermaid
 graph LR
@@ -326,7 +326,7 @@ graph TB
 
 ### Example 1: AgentZero_RAG_Assistant
 
-**Purpose**: Answer questions about Agent Zero project documentation
+**Purpose**: Answer questions about IteraAgent project documentation
 
 **Configuration**:
 - **Pattern**: Plan-Execute with RAG
@@ -341,7 +341,7 @@ graph TB
 
 **Sample Q&A**:
 ```
-Q: "What is Agent Zero's slogan?"
+Q: "What is IteraAgent's slogan?"
 A: "Define logic, simulate graph, auto-deploy."
    Source: Project plan document, section 1.1
 ```
@@ -458,7 +458,7 @@ RUNTIME_BASE_URL=https://api.openai.com/v1
 
 ## 🔄 Advanced: Iterative Optimization
 
-If your agent doesn't pass tests on the first try, Agent Zero automatically optimizes:
+If your agent doesn't pass tests on the first try, IteraAgent automatically optimizes:
 
 ```bash
 $ python start.py
@@ -561,18 +561,18 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/Olding1/Agent_Zero/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Olding1/Agent_Zero/discussions)
+- **Issues**: [GitHub Issues](https://github.com/Olding1/IteraAgent/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Olding1/IteraAgent/discussions)
 - **Documentation**: [docs/](docs/)
 
 ---
 
 <div align="center">
 
-**Built with ❤️ by the Agent Zero Team**
+**Built with ❤️ by the IteraAgent Team**
 
 If this project helps you, please give us a ⭐️
 
-[⬆ Back to Top](#-agent-zero)
+[⬆ Back to Top](#-iteraagent)
 
 </div>

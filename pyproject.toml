@@ -1,14 +1,14 @@
 [project]
-name = "agent-zero"
+name = "itera-agent"
 version = "6.0.0"
 description = "Desktop-based, local, fully automated intelligent agent construction factory"
-authors = [{name = "Agent Zero Team"}]
+authors = [{name = "IteraAgent Team"}]
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
 
 [project.urls]
-Homepage = "https://github.com/agent-zero/agent-zero"
+Homepage = "https://github.com/Olding1/IteraAgent"
 
 [tool.black]
 line-length = 100

@@ -1,12 +1,12 @@
 #!/bin/bash
-# Agent Zero 一键安装脚本 (Linux/Mac)
+# IteraAgent 一键安装脚本 (Linux/Mac)
 # ==========================================
 
 set -e
 
 echo ""
 echo "========================================"
-echo "  Agent Zero 一键安装"
+echo "  IteraAgent 一键安装"
 echo "========================================"
 echo ""
 

@@ -11,7 +11,7 @@ from src.utils.export_utils import export_to_zip
 from src.utils.readme_generator import generate_readme
 
 print("=" * 70)
-print("🚀 Agent Zero Phase 5 - 功能快速参考")
+print("🚀 IteraAgent Phase 5 - 功能快速参考")
 print("=" * 70)
 
 # ============================================================

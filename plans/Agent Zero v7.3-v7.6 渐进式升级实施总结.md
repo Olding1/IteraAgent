@@ -1,4 +1,4 @@
-# Agent Zero v7.3-v7.6 渐进式升级实施总结
+# IteraAgent v7.3-v7.6 渐进式升级实施总结
 
 ## 📊 实施概览
 
@@ -14,19 +14,19 @@
 
 #### 实现内容
 
-1. **创建 UVDownloader 类** ([uv_downloader.py](file:///c:/Users/Administrator/Desktop/game/Agent_Zero/src/utils/uv_downloader.py))
+1. **创建 UVDownloader 类** ([uv_downloader.py](file:///c:/Users/Administrator/Desktop/game/IteraAgent/src/utils/uv_downloader.py))
    - 跨平台支持 (Windows/Linux/macOS)
    - 自动下载 uv 二进制到项目 bin 目录
    - 支持 zip/tar.gz 格式解压
    - 版本管理和验证
 
-2. **创建 PerformanceMetrics 类** ([performance_metrics.py](file:///c:/Users/Administrator/Desktop/game/Agent_Zero/src/utils/performance_metrics.py))
+2. **创建 PerformanceMetrics 类** ([performance_metrics.py](file:///c:/Users/Administrator/Desktop/game/IteraAgent/src/utils/performance_metrics.py))
    - 跟踪 venv 创建时间
    - 跟踪依赖安装时间
    - 跟踪下载时间
    - 生成性能报告
 
-3. **集成到 EnvManager** ([env_manager.py](file:///c:/Users/Administrator/Desktop/game/Agent_Zero/src/core/env_manager.py))
+3. **集成到 EnvManager** ([env_manager.py](file:///c:/Users/Administrator/Desktop/game/IteraAgent/src/core/env_manager.py))
    - uv 优先策略
    - 自动回退到 venv
    - 性能监控集成
@@ -64,7 +64,7 @@ def _setup_with_venv(self) -> EnvSetupResult:
 
 #### 实现内容
 
-1. **创建 trace_visualizer 模块** ([trace_visualizer.py](file:///c:/Users/Administrator/Desktop/game/Agent_Zero/src/utils/trace_visualizer.py))
+1. **创建 trace_visualizer 模块** ([trace_visualizer.py](file:///c:/Users/Administrator/Desktop/game/IteraAgent/src/utils/trace_visualizer.py))
    - `generate_trace_html()` - 生成美观的 HTML 报告
    - `generate_trace_summary()` - 生成文本摘要
    - 支持 Mermaid 流程图
@@ -96,14 +96,14 @@ html = generate_trace_html(
 
 ### 实现内容
 
-1. **扩展 ProjectMeta Schema** ([project_meta.py](file:///c:/Users/Administrator/Desktop/game/Agent_Zero/src/schemas/project_meta.py))
+1. **扩展 ProjectMeta Schema** ([project_meta.py](file:///c:/Users/Administrator/Desktop/game/IteraAgent/src/schemas/project_meta.py))
    ```python
    # 新增字段
    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
    missing_info: List[str] = Field(default_factory=list)
    ```
 
-2. **实现推断式分析** ([pm.py](file:///c:/Users/Administrator/Desktop/game/Agent_Zero/src/core/pm.py))
+2. **实现推断式分析** ([pm.py](file:///c:/Users/Administrator/Desktop/game/IteraAgent/src/core/pm.py))
    - `analyze_with_inference()` - 推断式分析主方法
    - `_calculate_confidence()` - 置信度计算
    - `_identify_missing_info()` - 缺失信息识别
@@ -131,7 +131,7 @@ html = generate_trace_html(
 
 ### 实现内容
 
-**扩展 ToolMetadata** ([registry.py](file:///c:/Users/Administrator/Desktop/game/Agent_Zero/src/tools/registry.py))
+**扩展 ToolMetadata** ([registry.py](file:///c:/Users/Administrator/Desktop/game/IteraAgent/src/tools/registry.py))
 
 ```python
 class ToolMetadata(BaseModel):

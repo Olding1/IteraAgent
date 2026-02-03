@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 # Agent directory
-agent_dir = Path(r"C:\Users\Administrator\Desktop\game\Agent_Zero\agents\AgentZero文档助手")
+agent_dir = Path(r"C:\Users\Administrator\Desktop\game\IteraAgent\agents\AgentZero文档助手")
 agent_file = agent_dir / "agent.py"
 
 if not agent_file.exists():

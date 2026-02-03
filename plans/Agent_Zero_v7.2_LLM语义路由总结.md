@@ -1,4 +1,4 @@
-# Agent Zero v7.2 - LLM 语义路由升级总结
+# IteraAgent v7.2 - LLM 语义路由升级总结
 
 **版本**: v7.2  
 **日期**: 2026-01-21 ~ 2026-01-22  
@@ -9,7 +9,7 @@
 ## 📋 项目概述
 
 ### 目标
-将 Agent Zero 的 RAG 路由机制从**关键词匹配**升级为**LLM 语义路由**,提升意图识别准确性。
+将 IteraAgent 的 RAG 路由机制从**关键词匹配**升级为**LLM 语义路由**,提升意图识别准确性。
 
 ### 背景
 - **问题**: 旧方案使用硬编码关键词 (`["什么", "如何", "为什么"]`) 判断是否需要检索
@@ -139,9 +139,9 @@ for msg in reversed(messages):
 
 | 阶段 | Agent | 通过率 | 失败测试 | 原因 |
 |------|-------|--------|----------|------|
-| **修复前** | AgentZeroDocAssistant | 66.7% (4/6) | test_4, test_5 | 使用 "SEARCH" 检索 |
-| **修复后** | AgentZero文档助手 | 83.3% (5/6) | test_3 | RAG 配置需优化 |
-| **优化后** | AgentZero文档助手 | **100% (6/6)** | 无 | RAG Optimizer 自动优化 |
+| **修复前** | IteraAgentDocAssistant | 66.7% (4/6) | test_4, test_5 | 使用 "SEARCH" 检索 |
+| **修复后** | IteraAgent文档助手 | 83.3% (5/6) | test_3 | RAG 配置需优化 |
+| **优化后** | IteraAgent文档助手 | **100% (6/6)** | 无 | RAG Optimizer 自动优化 |
 
 ### 最终结果
 
@@ -242,7 +242,7 @@ decision = llm.invoke([system_prompt, user_query])
 **效果对比**:
 | 查询 | 旧方案 | 新方案 |
 |------|--------|--------|
-| "Agent Zero 的核心是啥?" | ❌ 未匹配 | ✅ SEARCH |
+| "IteraAgent 的核心是啥?" | ❌ 未匹配 | ✅ SEARCH |
 | "具体步骤?" | ❌ 未匹配 | ✅ SEARCH |
 | "你好,介绍一下你自己" | ❌ 误判为 SEARCH | ✅ CHAT |
 

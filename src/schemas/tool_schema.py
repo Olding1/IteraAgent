@@ -1,4 +1,4 @@
-"""Tool schema definitions for Agent Zero v8.0.
+"""Tool schema definitions for IteraAgent v8.0.
 
 This module defines the schema for tool definitions used in the tool discovery
 and interface guard systems.

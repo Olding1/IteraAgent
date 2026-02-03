@@ -1,4 +1,4 @@
-"""Startup script for Agent Zero system."""
+"""Startup script for IteraAgent system."""
 
 import asyncio
 import sys
@@ -36,7 +36,7 @@ def select_language(args) -> str:
 
 
 def print_banner():
-    """Print Agent Zero banner."""
+    """Print IteraAgent banner."""
     print("=" * 70)
     print(t("banner"))
     print(f"   {t('banner_subtitle')}")
@@ -1325,8 +1325,8 @@ async def main():
         elif choice == "6":
             print("\n📖 文档")
             print("   README.md - 项目概览")
-            print("   Agent Zero项目计划书.md - 项目计划")
-            print("   Agent_Zero_详细实施计划.md - 实施细节")
+            print("   IteraAgent项目计划书.md - 项目计划")
+            print("   IteraAgent_详细实施计划.md - 实施细节")
         elif choice == "7":
             # 🆕 Phase 5: 导出 Agent 到 Dify
             print("\n📤 导出 Agent 到 Dify")
@@ -1493,7 +1493,7 @@ async def main():
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description="Agent Zero v8.0 - Intelligent Agent Factory",
+        description="IteraAgent v8.0 - Intelligent Agent Factory",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(

@@ -1,4 +1,4 @@
-"""Core modules for Agent Zero"""
+"""Core modules for IteraAgent"""
 
 from .compiler import Compiler
 from .env_manager import EnvManager

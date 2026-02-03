@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Agent Zero v8.0 - Phase 5 依赖一键安装脚本
+IteraAgent v8.0 - Phase 5 依赖一键安装脚本
 
 自动检测并安装所有必需的依赖
 """
@@ -50,7 +50,7 @@ def install_package(package):
 
 
 def main():
-    print_header("🚀 Agent Zero v8.0 - Phase 5 依赖安装")
+    print_header("🚀 IteraAgent v8.0 - Phase 5 依赖安装")
 
     # 定义依赖包
     core_packages = {

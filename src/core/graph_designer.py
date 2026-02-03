@@ -461,7 +461,7 @@ return "end"
 - 只输出 'SEARCH' 或 'CHAT',不要输出其他内容
 
 示例:
-- "Agent Zero 的核心特性是什么?" -> SEARCH
+- "IteraAgent 的核心特性是什么?" -> SEARCH
 - "具体步骤?" -> SEARCH  
 - "你好" -> CHAT
 - "谢谢" -> CHAT""",

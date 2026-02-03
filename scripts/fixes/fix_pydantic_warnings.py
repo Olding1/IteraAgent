@@ -61,7 +61,7 @@ def fix_pydantic_config(file_path: Path):
 
 
 # 执行修复
-base_dir = Path("c:/Users/Administrator/Desktop/game/Agent_Zero")
+base_dir = Path("c:/Users/Administrator/Desktop/game/IteraAgent")
 for file_rel in files_to_fix:
     file_path = base_dir / file_rel
     if file_path.exists():

@@ -8,7 +8,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo "============================================================"
-echo -e "${BLUE}   启动 Agent Zero Chat UI${NC}"
+echo -e "${BLUE}   启动 IteraAgent Chat UI${NC}"
 echo "============================================================"
 echo ""
 

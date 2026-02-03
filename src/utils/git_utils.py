@@ -69,7 +69,7 @@ class GitUtils:
 
             if not result.stdout.strip():
                 # 设置默认配置
-                subprocess.run(["git", "config", "--global", "user.name", "Agent Zero"], check=True)
+                subprocess.run(["git", "config", "--global", "user.name", "IteraAgent"], check=True)
                 subprocess.run(
                     ["git", "config", "--global", "user.email", "agent@zero.ai"], check=True
                 )

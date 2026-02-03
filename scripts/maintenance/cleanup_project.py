@@ -1,5 +1,5 @@
 """
-Agent Zero 项目清理脚本
+IteraAgent 项目清理脚本
 
 自动化执行文档和脚本的整理工作:
 - 归档历史文档到 docs/archive/
@@ -191,8 +191,8 @@ class ProjectCleanup:
 ## 📚 文档结构
 
 - `README.md` - 项目概览
-- `Agent_Zero_详细实施计划.md` - 完整实施计划
-- `Agent Zero项目计划书.md` - 原始项目计划
+- `IteraAgent_详细实施计划.md` - 完整实施计划
+- `IteraAgent项目计划书.md` - 原始项目计划
 - `Phase6_final_summary.md` - Phase 6 最终总结
 - `PHASE6_TEST_GUIDE.md` - Phase 6 测试指南
 - `docs/archive/` - 历史文档归档
@@ -219,8 +219,8 @@ class ProjectCleanup:
         # 检查核心文档
         core_docs = [
             "README.md",
-            "Agent_Zero_详细实施计划.md",
-            "Agent Zero项目计划书.md",
+            "IteraAgent_详细实施计划.md",
+            "IteraAgent项目计划书.md",
             "Phase6_final_summary.md",
             "PHASE6_TEST_GUIDE.md",
         ]
@@ -257,7 +257,7 @@ class ProjectCleanup:
     def run(self):
         """执行清理"""
         self.log("=" * 70, "INFO")
-        self.log("Agent Zero 项目清理", "INFO")
+        self.log("IteraAgent 项目清理", "INFO")
         self.log("=" * 70, "INFO")
 
         if self.dry_run:
@@ -288,7 +288,7 @@ class ProjectCleanup:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Agent Zero 项目清理脚本")
+    parser = argparse.ArgumentParser(description="IteraAgent 项目清理脚本")
     parser.add_argument("--execute", action="store_true", help="执行实际清理 (默认为 dry-run 模式)")
     parser.add_argument(
         "--project-root", type=str, default=".", help="项目根目录路径 (默认为当前目录)"
